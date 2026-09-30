@@ -1,54 +1,65 @@
-# dunder-proto <sup>[![Version Badge][npm-version-svg]][package-url]</sup>
+# ecdsa-sig-formatter
 
-[![github actions][actions-image]][actions-url]
-[![coverage][codecov-image]][codecov-url]
-[![License][license-image]][license-url]
-[![Downloads][downloads-image]][downloads-url]
+[![Build Status](https://travis-ci.org/Brightspace/node-ecdsa-sig-formatter.svg?branch=master)](https://travis-ci.org/Brightspace/node-ecdsa-sig-formatter) [![Coverage Status](https://coveralls.io/repos/Brightspace/node-ecdsa-sig-formatter/badge.svg)](https://coveralls.io/r/Brightspace/node-ecdsa-sig-formatter)
 
-[![npm badge][npm-badge-png]][package-url]
+Translate between JOSE and ASN.1/DER encodings for ECDSA signatures
 
-If available, the `Object.prototype.__proto__` accessor and mutator, call-bound.
-
-## Getting started
-
+## Install
 ```sh
-npm install --save dunder-proto
+npm install ecdsa-sig-formatter --save
 ```
 
-## Usage/Examples
-
+## Usage
 ```js
-const assert = require('assert');
-const getDunder = require('dunder-proto/get');
-const setDunder = require('dunder-proto/set');
+var format = require('ecdsa-sig-formatter');
 
-const obj = {};
+var derSignature = '..'; // asn.1/DER encoded ecdsa signature
 
-assert.equal('toString' in obj, true);
-assert.equal(getDunder(obj), Object.prototype);
+var joseSignature = format.derToJose(derSignature);
 
-setDunder(obj, null);
-
-assert.equal('toString' in obj, false);
-assert.equal(getDunder(obj), null);
 ```
 
-## Tests
+### API
 
-Clone the repo, `npm install`, and run `npm test`
+---
 
-[package-url]: https://npmjs.org/package/dunder-proto
-[npm-version-svg]: https://versionbadg.es/es-shims/dunder-proto.svg
-[deps-svg]: https://david-dm.org/es-shims/dunder-proto.svg
-[deps-url]: https://david-dm.org/es-shims/dunder-proto
-[dev-deps-svg]: https://david-dm.org/es-shims/dunder-proto/dev-status.svg
-[dev-deps-url]: https://david-dm.org/es-shims/dunder-proto#info=devDependencies
-[npm-badge-png]: https://nodei.co/npm/dunder-proto.png?downloads=true&stars=true
-[license-image]: https://img.shields.io/npm/l/dunder-proto.svg
-[license-url]: LICENSE
-[downloads-image]: https://img.shields.io/npm/dm/dunder-proto.svg
-[downloads-url]: https://npm-stat.com/charts.html?package=dunder-proto
-[codecov-image]: https://codecov.io/gh/es-shims/dunder-proto/branch/main/graphs/badge.svg
-[codecov-url]: https://app.codecov.io/gh/es-shims/dunder-proto/
-[actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/es-shims/dunder-proto
-[actions-url]: https://github.com/es-shims/dunder-proto/actions
+#### `.derToJose(Buffer|String signature, String alg)` -> `String`
+
+Convert the ASN.1/DER encoded signature to a JOSE-style concatenated signature.
+Returns a _base64 url_ encoded `String`.
+
+* If _signature_ is a `String`, it should be _base64_ encoded
+* _alg_ must be one of _ES256_, _ES384_ or _ES512_
+
+---
+
+#### `.joseToDer(Buffer|String signature, String alg)` -> `Buffer`
+
+Convert the JOSE-style concatenated signature to an ASN.1/DER encoded
+signature. Returns a `Buffer`
+
+* If _signature_ is a `String`, it should be _base64 url_ encoded
+* _alg_ must be one of _ES256_, _ES384_ or _ES512_
+
+## Contributing
+
+1. **Fork** the repository. Committing directly against this repository is
+   highly discouraged.
+
+2. Make your modifications in a branch, updating and writing new unit tests
+   as necessary in the `spec` directory.
+
+3. Ensure that all tests pass with `npm test`
+
+4. `rebase` your changes against master. *Do not merge*.
+
+5. Submit a pull request to this repository. Wait for tests to run and someone
+   to chime in.
+
+### Code Style
+
+This repository is configured with [EditorConfig][EditorConfig] and
+[ESLint][ESLint] rules.
+
+[EditorConfig]: http://editorconfig.org/
+[ESLint]: http://eslint.org
