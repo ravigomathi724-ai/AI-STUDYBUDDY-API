@@ -1,130 +1,199 @@
-require('./index.js');
-const express = require('express');
-const supertest = require('supertest');
-const assert = require('assert');
-
-describe('express-async-errors', () => {
-  it('propagates routes errors to error handler', () => {
-    const app = express();
-
-    app.get('/test', async () => {
-      throw new Error('error');
-    });
-
-    app.use((err, req, res, next) => {
-      res.status(495);
-      res.end();
-    });
-
-    return supertest(app)
-      .get('/test')
-      .expect(495);
-  });
-
-  it('propagates regular middleware errors too', () => {
-    const app = express();
-
-    app.use(async () => {
-      throw new Error('error');
-    });
-
-    app.get('/test', async () => {
-      throw new Error('error');
-    });
-
-    app.use((err, req, res, next) => {
-      res.status(495);
-      res.end();
-    });
-
-    return supertest(app)
-      .get('/test')
-      .expect(495);
-  });
-
-  it('and propagates error middleware errors too', () => {
-    const app = express();
-
-    app.get('/test', async () => {
-      throw new Error('error');
-    });
-
-    app.use(async (err, req, res, next) => {
-      throw new Error('error');
-    });
-
-    app.use((err, req, res, next) => {
-      res.status(495);
-      res.end();
-    });
-
-    return supertest(app)
-      .get('/test')
-      .expect(495);
-  });
-
-  it('and propagates param middleware errors too', () => {
-    const app = express();
-
-    app.param('id', async () => {
-      throw new Error('error');
-    });
-
-    app.get('/test/:id', async (err, req, next, id) => {
-      throw new Error(`error ${id}`);
-    });
-
-    app.use((err, req, res, next) => {
-      res.status(495);
-      res.end();
-    });
-
-    return supertest(app)
-      .get('/test/12')
-      .expect(495);
-  });
-
-  it('should preserve the router stack for external routes', () => {
-    const app = express();
-
-    function swaggerize(item) {
-      function describeRouterRoute(router, metaData) {
-        const lastRoute = router.stack[router.stack.length - 1];
-        const verb = Object.keys(lastRoute.route.methods)[0];
-        metaData.path = lastRoute.route.path;
-        metaData.verb = verb;
-        lastRoute.route.swaggerData = metaData;
-        metaData.described = true;
-      }
-
-      function describe(metaData) {
-        if (item.stack) {
-          describeRouterRoute(item, metaData);
-          return item;
-        }
-        describeRouterRoute(item._router, metaData);
-        return item;
-      }
-
-      item.describe = describe;
-    }
-
-    const router = express.Router();
-    swaggerize(router);
-
-    router
-      .get('/test', (req, res) => {
-        res.status(200).send('Ok');
-      })
-      .describe({ hasDescription: true });
-    app.use('/', router);
-
-    const appRouteStack = app._router.stack;
-    const someMiddlewareFunctionStack = appRouteStack[appRouteStack.length - 1];
-    const innerStack = someMiddlewareFunctionStack.handle.stack;
-    const routeData = innerStack[0].route.swaggerData;
-    assert.ok(routeData);
-    assert.equal(routeData.verb, 'get');
-    assert.equal(routeData.hasDescription, true);
-  });
+var assert = require('assert');
+var ourProcess = require('./browser');
+describe('test against our process', function () {
+    test(ourProcess);
 });
+if (!process.browser) {
+  describe('test against node', function () {
+    test(process);
+  });
+  vmtest();
+}
+function test (ourProcess) {
+    describe('test arguments', function () {
+        it ('works', function (done) {
+          var order = 0;
+
+
+          ourProcess.nextTick(function (num) {
+              assert.equal(num, order++, 'first one works');
+              ourProcess.nextTick(function (num) {
+                assert.equal(num, order++, 'recursive one is 4th');
+              }, 3);
+          }, 0);
+          ourProcess.nextTick(function (num) {
+              assert.equal(num, order++, 'second one starts');
+              ourProcess.nextTick(function (num) {
+                assert.equal(num, order++, 'this is third');
+                ourProcess.nextTick(function (num) {
+                    assert.equal(num, order++, 'this is last');
+                    done();
+                }, 5);
+            }, 4);
+          }, 1);
+          ourProcess.nextTick(function (num) {
+
+              assert.equal(num, order++, '3rd schedualed happens after the error');
+          }, 2);
+        });
+    });
+if (!process.browser) {
+    describe('test errors', function (t) {
+        it ('works', function (done) {
+        var order = 0;
+        process.removeAllListeners('uncaughtException');
+        process.once('uncaughtException', function(err) {
+            assert.equal(2, order++, 'error is third');
+            ourProcess.nextTick(function () {
+                assert.equal(5, order++, 'schedualed in error is last');
+                done();
+            });
+        });
+        ourProcess.nextTick(function () {
+            assert.equal(0, order++, 'first one works');
+            ourProcess.nextTick(function () {
+            assert.equal(4, order++, 'recursive one is 4th');
+            });
+        });
+        ourProcess.nextTick(function () {
+            assert.equal(1, order++, 'second one starts');
+            throw(new Error('an error is thrown'));
+        });
+        ourProcess.nextTick(function () {
+            assert.equal(3, order++, '3rd schedualed happens after the error');
+        });
+        });
+    });
+}
+    describe('rename globals', function (t) {
+      var oldTimeout = setTimeout;
+      var oldClear = clearTimeout;
+
+      it('clearTimeout', function (done){
+
+        var ok = true;
+        clearTimeout = function () {
+          ok = false;
+        }
+        var ran = false;
+        function cleanup() {
+          clearTimeout = oldClear;
+          var err;
+          try {
+            assert.ok(ok, 'fake clearTimeout ran');
+            assert.ok(ran, 'should have run');
+          } catch (e) {
+            err = e;
+          }
+          done(err);
+        }
+        setTimeout(cleanup, 1000);
+        ourProcess.nextTick(function () {
+          ran = true;
+        });
+      });
+      it('just setTimeout', function (done){
+
+
+        setTimeout = function () {
+          setTimeout = oldTimeout;
+          try {
+            assert.ok(false, 'fake setTimeout called')
+          } catch (e) {
+            done(e);
+          }
+
+        }
+
+        ourProcess.nextTick(function () {
+          setTimeout = oldTimeout;
+          done();
+        });
+      });
+    });
+}
+function vmtest() {
+  var vm = require('vm');
+  var fs = require('fs');
+  var process =  fs.readFileSync('./browser.js', {encoding: 'utf8'});
+
+
+  describe('should work in vm in strict mode with no globals', function () {
+    it('should parse', function (done) {
+      var str = '"use strict";var module = {exports:{}};';
+      str += process;
+      str += 'this.works = process.browser;';
+      var script = new vm.Script(str);
+      var context = {
+        works: false
+      };
+      script.runInNewContext(context);
+      assert.ok(context.works);
+      done();
+    });
+    it('setTimeout throws error', function (done) {
+      var str = '"use strict";var module = {exports:{}};';
+      str += process;
+      str += 'try {process.nextTick(function () {})} catch (e){this.works = e;}';
+      var script = new vm.Script(str);
+      var context = {
+        works: false
+      };
+      script.runInNewContext(context);
+      assert.ok(context.works);
+      done();
+    });
+    it('should generally work', function (done) {
+      var str = '"use strict";var module = {exports:{}};';
+      str += process;
+      str += 'process.nextTick(function () {assert.ok(true);done();})';
+      var script = new vm.Script(str);
+      var context = {
+        clearTimeout: clearTimeout,
+        setTimeout: setTimeout,
+        done: done,
+        assert: assert
+      };
+      script.runInNewContext(context);
+    });
+    it('late defs setTimeout', function (done) {
+      var str = '"use strict";var module = {exports:{}};';
+      str += process;
+      str += 'var setTimeout = hiddenSetTimeout;process.nextTick(function () {assert.ok(true);done();})';
+      var script = new vm.Script(str);
+      var context = {
+        clearTimeout: clearTimeout,
+        hiddenSetTimeout: setTimeout,
+        done: done,
+        assert: assert
+      };
+      script.runInNewContext(context);
+    });
+    it('late defs clearTimeout', function (done) {
+      var str = '"use strict";var module = {exports:{}};';
+      str += process;
+      str += 'var clearTimeout = hiddenClearTimeout;process.nextTick(function () {assert.ok(true);done();})';
+      var script = new vm.Script(str);
+      var context = {
+        hiddenClearTimeout: clearTimeout,
+        setTimeout: setTimeout,
+        done: done,
+        assert: assert
+      };
+      script.runInNewContext(context);
+    });
+    it('late defs setTimeout and then redefine', function (done) {
+      var str = '"use strict";var module = {exports:{}};';
+      str += process;
+      str += 'var setTimeout = hiddenSetTimeout;process.nextTick(function () {setTimeout = function (){throw new Error("foo")};hiddenSetTimeout(function(){process.nextTick(function (){assert.ok(true);done();});});});';
+      var script = new vm.Script(str);
+      var context = {
+        clearTimeout: clearTimeout,
+        hiddenSetTimeout: setTimeout,
+        done: done,
+        assert: assert
+      };
+      script.runInNewContext(context);
+    });
+  });
+}
