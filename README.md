@@ -1,50 +1,53 @@
-# buffer-equal-constant-time
+# call-bound <sup>[![Version Badge][npm-version-svg]][package-url]</sup>
 
-Constant-time `Buffer` comparison for node.js.  Should work with browserify too.
+[![github actions][actions-image]][actions-url]
+[![coverage][codecov-image]][codecov-url]
+[![dependency status][deps-svg]][deps-url]
+[![dev dependency status][dev-deps-svg]][dev-deps-url]
+[![License][license-image]][license-url]
+[![Downloads][downloads-image]][downloads-url]
 
-[![Build Status](https://travis-ci.org/goinstant/buffer-equal-constant-time.png?branch=master)](https://travis-ci.org/goinstant/buffer-equal-constant-time)
+[![npm badge][npm-badge-png]][package-url]
+
+Robust call-bound JavaScript intrinsics, using `call-bind` and `get-intrinsic`.
+
+## Getting started
 
 ```sh
-  npm install buffer-equal-constant-time
+npm install --save call-bound
 ```
 
-# Usage
+## Usage/Examples
 
 ```js
-  var bufferEq = require('buffer-equal-constant-time');
+const assert = require('assert');
+const callBound = require('call-bound');
 
-  var a = new Buffer('asdf');
-  var b = new Buffer('asdf');
-  if (bufferEq(a,b)) {
-    // the same!
-  } else {
-    // different in at least one byte!
-  }
+const slice = callBound('Array.prototype.slice');
+
+delete Function.prototype.call;
+delete Function.prototype.bind;
+delete Array.prototype.slice;
+
+assert.deepEqual(slice([1, 2, 3, 4], 1, -1), [2, 3]);
 ```
 
-If you'd like to install an `.equal()` method onto the node.js `Buffer` and
-`SlowBuffer` prototypes:
+## Tests
 
-```js
-  require('buffer-equal-constant-time').install();
+Clone the repo, `npm install`, and run `npm test`
 
-  var a = new Buffer('asdf');
-  var b = new Buffer('asdf');
-  if (a.equal(b)) {
-    // the same!
-  } else {
-    // different in at least one byte!
-  }
-```
-
-To get rid of the installed `.equal()` method, call `.restore()`:
-
-```js
-  require('buffer-equal-constant-time').restore();
-```
-
-# Legal
-
-&copy; 2013 GoInstant Inc., a salesforce.com company
-
-Licensed under the BSD 3-clause license.
+[package-url]: https://npmjs.org/package/call-bound
+[npm-version-svg]: https://versionbadg.es/ljharb/call-bound.svg
+[deps-svg]: https://david-dm.org/ljharb/call-bound.svg
+[deps-url]: https://david-dm.org/ljharb/call-bound
+[dev-deps-svg]: https://david-dm.org/ljharb/call-bound/dev-status.svg
+[dev-deps-url]: https://david-dm.org/ljharb/call-bound#info=devDependencies
+[npm-badge-png]: https://nodei.co/npm/call-bound.png?downloads=true&stars=true
+[license-image]: https://img.shields.io/npm/l/call-bound.svg
+[license-url]: LICENSE
+[downloads-image]: https://img.shields.io/npm/dm/call-bound.svg
+[downloads-url]: https://npm-stat.com/charts.html?package=call-bound
+[codecov-image]: https://codecov.io/gh/ljharb/call-bound/branch/main/graphs/badge.svg
+[codecov-url]: https://app.codecov.io/gh/ljharb/call-bound/
+[actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/ljharb/call-bound
+[actions-url]: https://github.com/ljharb/call-bound/actions
