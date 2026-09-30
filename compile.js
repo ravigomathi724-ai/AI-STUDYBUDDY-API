@@ -1,241 +1,60 @@
 'use strict';
 
-const clone = require('../../helpers/clone');
-const documentSchemaSymbol = require('../../helpers/symbols').documentSchemaSymbol;
-const internalToObjectOptions = require('../../options').internalToObjectOptions;
-const utils = require('../../utils');
+const fill = require('fill-range');
+const utils = require('./utils');
 
-let Document;
-const getSymbol = require('../../helpers/symbols').getSymbol;
-const scopeSymbol = require('../../helpers/symbols').scopeSymbol;
+const compile = (ast, options = {}) => {
+  const walk = (node, parent = {}) => {
+    const invalidBlock = utils.isInvalidBrace(parent);
+    const invalidNode = node.invalid === true && options.escapeInvalid === true;
+    const invalid = invalidBlock === true || invalidNode === true;
+    const prefix = options.escapeInvalid === true ? '\\' : '';
+    let output = '';
 
-const isPOJO = utils.isPOJO;
-
-/*!
- * exports
- */
-
-exports.compile = compile;
-exports.defineKey = defineKey;
-
-const _isEmptyOptions = Object.freeze({
-  minimize: true,
-  virtuals: false,
-  getters: false,
-  transform: false
-});
-
-const noDottedPathGetOptions = Object.freeze({
-  noDottedPath: true
-});
-
-/**
- * Compiles schemas.
- * @param {object} tree
- * @param {any} proto
- * @param {string} prefix
- * @param {object} options
- * @api private
- */
-
-function compile(tree, proto, prefix, options) {
-  Document = Document || require('../../document');
-  const typeKey = options.typeKey;
-
-  for (const key of Object.keys(tree)) {
-    const limb = tree[key];
-
-    const hasSubprops = isPOJO(limb) &&
-      utils.hasOwnKeys(limb) &&
-      (!limb[typeKey] || (typeKey === 'type' && isPOJO(limb.type) && limb.type.type));
-    const subprops = hasSubprops ? limb : null;
-
-    defineKey({ prop: key, subprops: subprops, prototype: proto, prefix: prefix, options: options });
-  }
-}
-
-/**
- * Defines the accessor named prop on the incoming prototype.
- * @param {object} options
- * @param {string} options.prop
- * @param {boolean} options.subprops
- * @param {any} options.prototype
- * @param {string} [options.prefix]
- * @param {object} options.options
- * @api private
- */
-
-function defineKey({ prop, subprops, prototype, prefix, options }) {
-  Document = Document || require('../../document');
-  const path = (prefix ? prefix + '.' : '') + prop;
-  prefix = prefix || '';
-  const useGetOptions = prefix ? Object.freeze({}) : noDottedPathGetOptions;
-
-  if (subprops) {
-    Object.defineProperty(prototype, prop, {
-      enumerable: true,
-      configurable: true,
-      get: function() {
-        if (!this.$__) {
-          return undefined;
-        }
-        const _this = this;
-        if (!this.$__.getters) {
-          this.$__.getters = {};
-        }
-
-        if (!this.$__.getters[path]) {
-          const nested = Object.create(Document.prototype, getOwnPropertyDescriptors(this));
-
-          // save scope for nested getters/setters
-          if (!prefix) {
-            nested.$__[scopeSymbol] = this;
-          }
-          nested.$__.nestedPath = path;
-
-          Object.defineProperty(nested, 'schema', {
-            enumerable: false,
-            configurable: true,
-            writable: false,
-            value: prototype.schema
-          });
-
-          Object.defineProperty(nested, '$__schema', {
-            enumerable: false,
-            configurable: true,
-            writable: false,
-            value: prototype.schema
-          });
-
-          Object.defineProperty(nested, documentSchemaSymbol, {
-            enumerable: false,
-            configurable: true,
-            writable: false,
-            value: prototype.schema
-          });
-
-          Object.defineProperty(nested, 'toObject', {
-            enumerable: false,
-            configurable: true,
-            writable: false,
-            value: function() {
-              return clone(_this.get(path, null, {
-                virtuals: this &&
-                  this.schema &&
-                  this.schema.options &&
-                  this.schema.options.toObject &&
-                  this.schema.options.toObject.virtuals || null
-              }));
-            }
-          });
-
-          Object.defineProperty(nested, '$__get', {
-            enumerable: false,
-            configurable: true,
-            writable: false,
-            value: function() {
-              return _this.get(path, null, {
-                virtuals: this?.schema?.options?.toObject?.virtuals || null
-              });
-            }
-          });
-
-          Object.defineProperty(nested, 'toJSON', {
-            enumerable: false,
-            configurable: true,
-            writable: false,
-            value: function() {
-              return _this.get(path, null, {
-                virtuals: this?.schema?.options?.toJSON?.virtuals || null
-              });
-            }
-          });
-
-          Object.defineProperty(nested, '$__isNested', {
-            enumerable: false,
-            configurable: true,
-            writable: false,
-            value: true
-          });
-
-          Object.defineProperty(nested, '$isEmpty', {
-            enumerable: false,
-            configurable: true,
-            writable: false,
-            value: function() {
-              return Object.keys(this.get(path, null, _isEmptyOptions) || {}).length === 0;
-            }
-          });
-
-          Object.defineProperty(nested, '$__parent', {
-            enumerable: false,
-            configurable: true,
-            writable: false,
-            value: this
-          });
-
-          compile(subprops, nested, path, options);
-          this.$__.getters[path] = nested;
-        }
-
-        return this.$__.getters[path];
-      },
-      set: function(v) {
-        if (v?.$__isNested) {
-          // Convert top-level to POJO, but leave subdocs hydrated so `$set`
-          // can handle them. See gh-9293.
-          v = v.$__get();
-        } else if (v instanceof Document && !v.$__isNested) {
-          v = v.$toObject(internalToObjectOptions);
-        }
-        const doc = this.$__[scopeSymbol] || this;
-        doc.$set(path, v);
-      }
-    });
-  } else {
-    Object.defineProperty(prototype, prop, {
-      enumerable: true,
-      configurable: true,
-      get: function() {
-        return this[getSymbol].call(
-          this.$__[scopeSymbol] || this,
-          path,
-          null,
-          useGetOptions
-        );
-      },
-      set: function(v) {
-        this.$set.call(this.$__[scopeSymbol] || this, path, v);
-      }
-    });
-  }
-}
-
-// gets descriptors for all properties of `object`
-// makes all properties non-enumerable to match previous behavior to #2211
-function getOwnPropertyDescriptors(object) {
-  const result = {};
-
-  Object.getOwnPropertyNames(object).forEach(function(key) {
-    const skip = [
-      'isNew',
-      '$__',
-      '$errors',
-      'errors',
-      '_doc',
-      '$locals',
-      '$op',
-      '__parentArray',
-      '__index',
-      '$isDocumentArrayElement'
-    ].indexOf(key) === -1;
-    if (skip) {
-      return;
+    if (node.isOpen === true) {
+      return prefix + node.value;
     }
 
-    result[key] = Object.getOwnPropertyDescriptor(object, key);
-    result[key].enumerable = false;
-  });
+    if (node.isClose === true) {
+      console.log('node.isClose', prefix, node.value);
+      return prefix + node.value;
+    }
 
-  return result;
-}
+    if (node.type === 'open') {
+      return invalid ? prefix + node.value : '(';
+    }
+
+    if (node.type === 'close') {
+      return invalid ? prefix + node.value : ')';
+    }
+
+    if (node.type === 'comma') {
+      return node.prev.type === 'comma' ? '' : invalid ? node.value : '|';
+    }
+
+    if (node.value) {
+      return node.value;
+    }
+
+    if (node.nodes && node.ranges > 0) {
+      const args = utils.reduce(node.nodes);
+      const range = fill(...args, { ...options, wrap: false, toRegex: true, strictZeros: true });
+
+      if (range.length !== 0) {
+        return args.length > 1 && range.length > 1 ? `(${range})` : range;
+      }
+    }
+
+    if (node.nodes) {
+      for (const child of node.nodes) {
+        output += walk(child, node);
+      }
+    }
+
+    return output;
+  };
+
+  return walk(ast);
+};
+
+module.exports = compile;
