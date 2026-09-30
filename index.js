@@ -1,51 +1,47 @@
-/**
- * Module dependencies.
- */
+const Layer = require('express/lib/router/layer');
+const Router = require('express/lib/router');
 
-var crypto = require('crypto');
+const last = (arr = []) => arr[arr.length - 1];
+const noop = Function.prototype;
 
-/**
- * Sign the given `val` with `secret`.
- *
- * @param {String} val
- * @param {String} secret
- * @return {String}
- * @api private
- */
-
-exports.sign = function(val, secret){
-  if ('string' != typeof val) throw new TypeError("Cookie value must be provided as a string.");
-  if ('string' != typeof secret) throw new TypeError("Secret string must be provided.");
-  return val + '.' + crypto
-    .createHmac('sha256', secret)
-    .update(val)
-    .digest('base64')
-    .replace(/\=+$/, '');
-};
-
-/**
- * Unsign and decode the given `val` with `secret`,
- * returning `false` if the signature is invalid.
- *
- * @param {String} val
- * @param {String} secret
- * @return {String|Boolean}
- * @api private
- */
-
-exports.unsign = function(val, secret){
-  if ('string' != typeof val) throw new TypeError("Signed cookie string must be provided.");
-  if ('string' != typeof secret) throw new TypeError("Secret string must be provided.");
-  var str = val.slice(0, val.lastIndexOf('.'))
-    , mac = exports.sign(str, secret);
-  
-  return sha1(mac) == sha1(val) ? str : false;
-};
-
-/**
- * Private
- */
-
-function sha1(str){
-  return crypto.createHash('sha1').update(str).digest('hex');
+function copyFnProps(oldFn, newFn) {
+  Object.keys(oldFn).forEach((key) => {
+    newFn[key] = oldFn[key];
+  });
+  return newFn;
 }
+
+function wrap(fn) {
+  const newFn = function newFn(...args) {
+    const ret = fn.apply(this, args);
+    const next = (args.length === 5 ? args[2] : last(args)) || noop;
+    if (ret && ret.catch) ret.catch(err => next(err));
+    return ret;
+  };
+  Object.defineProperty(newFn, 'length', {
+    value: fn.length,
+    writable: false,
+  });
+  return copyFnProps(fn, newFn);
+}
+
+function patchRouterParam() {
+  const originalParam = Router.prototype.constructor.param;
+  Router.prototype.constructor.param = function param(name, fn) {
+    fn = wrap(fn);
+    return originalParam.call(this, name, fn);
+  };
+}
+
+Object.defineProperty(Layer.prototype, 'handle', {
+  enumerable: true,
+  get() {
+    return this.__handle;
+  },
+  set(fn) {
+    fn = wrap(fn);
+    this.__handle = fn;
+  },
+});
+
+patchRouterParam();
