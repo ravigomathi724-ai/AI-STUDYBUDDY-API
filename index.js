@@ -1,1095 +1,560 @@
 'use strict';
 
-const Document = require('../../../document');
-const ArraySubdocument = require('../../arraySubdocument');
-const MongooseError = require('../../../error/mongooseError');
-const cleanModifiedSubpaths = require('../../../helpers/document/cleanModifiedSubpaths');
-const clone = require('../../../helpers/clone');
-const internalToObjectOptions = require('../../../options').internalToObjectOptions;
-const mpath = require('mpath');
-const utils = require('../../../utils');
-const isBsonType = require('../../../helpers/isBsonType');
-
-const arrayAtomicsBackupSymbol = require('../../../helpers/symbols').arrayAtomicsBackupSymbol;
-const arrayAtomicsSymbol = require('../../../helpers/symbols').arrayAtomicsSymbol;
-const arrayParentSymbol = require('../../../helpers/symbols').arrayParentSymbol;
-const arrayPathSymbol = require('../../../helpers/symbols').arrayPathSymbol;
-const arraySchemaSymbol = require('../../../helpers/symbols').arraySchemaSymbol;
-const populateModelSymbol = require('../../../helpers/symbols').populateModelSymbol;
-const slicedSymbol = Symbol('mongoose#Array#sliced');
-
-const _basePush = Array.prototype.push;
-
-/*!
- * ignore
+/**
+ * Create a new instance
  */
-
-const methods = {
-  /**
-   * Depopulates stored atomic operation values as necessary for direct insertion to MongoDB.
-   *
-   * If no atomics exist, we return all array values after conversion.
-   *
-   * @return {Array}
-   * @method $__getAtomics
-   * @memberOf MongooseArray
-   * @instance
-   * @api private
-   */
-
-  $__getAtomics() {
-    const ret = [];
-    const keys = Object.keys(this[arrayAtomicsSymbol] || {});
-    let i = keys.length;
-
-    const opts = Object.assign({}, internalToObjectOptions, { _isNested: true });
-
-    if (i === 0) {
-      ret[0] = ['$set', this.toObject(opts)];
-      return ret;
-    }
-
-    while (i--) {
-      const op = keys[i];
-      let val = this[arrayAtomicsSymbol][op];
-
-      // the atomic values which are arrays are not MongooseArrays. we
-      // need to convert their elements as if they were MongooseArrays
-      // to handle populated arrays versus DocumentArrays properly.
-      if (utils.isMongooseObject(val)) {
-        val = val.toObject(opts);
-      } else if (Array.isArray(val)) {
-        val = this.toObject.call(val, opts);
-      } else if (Array.isArray(val?.$each)) {
-        val.$each = this.toObject.call(val.$each, opts);
-      } else if (typeof val?.valueOf === 'function') {
-        val = val.valueOf();
-      }
-
-      if (op === '$addToSet') {
-        val = { $each: val };
-      }
-
-      ret.push([op, val]);
-    }
-
-    return ret;
-  },
-
-  /**
-   * Public API for getting atomics. Alias for $__getAtomics() that can be
-   * implemented by custom container types.
-   *
-   * @return {Array}
-   * @method getAtomics
-   * @memberOf MongooseArray
-   * @instance
-   * @api public
-   */
-
-  getAtomics() {
-    return this.$__getAtomics();
-  },
-
-  /**
-   * Clears all pending atomic operations. Called by Mongoose after save().
-   *
-   * @return {void}
-   * @method clearAtomics
-   * @memberOf MongooseArray
-   * @instance
-   * @api public
-   */
-
-  clearAtomics() {
-    this[arrayAtomicsBackupSymbol] = this[arrayAtomicsSymbol];
-    this[arrayAtomicsSymbol] = {};
-  },
-
-  /*!
-   * ignore
-   */
-
-  $atomics() {
-    return this[arrayAtomicsSymbol];
-  },
-
-  /*!
-   * ignore
-   */
-
-  $parent() {
-    return this[arrayParentSymbol];
-  },
-
-  /*!
-   * ignore
-   */
-
-  $path() {
-    return this[arrayPathSymbol];
-  },
-
-  /*!
-   * ignore
-   */
-  $schemaType() {
-    return this[arraySchemaSymbol];
-  },
-
-  /**
-   * Atomically shifts the array at most one time per document `save()`.
-   *
-   * #### Note:
-   *
-   * _Calling this multiple times on an array before saving sends the same command as calling it once._
-   * _This update is implemented using the MongoDB [$pop](https://www.mongodb.com/docs/manual/reference/operator/update/pop/) method which enforces this restriction._
-   *
-   *      doc.array = [1,2,3];
-   *
-   *      const shifted = doc.array.$shift();
-   *      console.log(shifted); // 1
-   *      console.log(doc.array); // [2,3]
-   *
-   *      // no affect
-   *      shifted = doc.array.$shift();
-   *      console.log(doc.array); // [2,3]
-   *
-   *      doc.save(function (err) {
-   *        if (err) return handleError(err);
-   *
-   *        // we saved, now $shift works again
-   *        shifted = doc.array.$shift();
-   *        console.log(shifted ); // 2
-   *        console.log(doc.array); // [3]
-   *      })
-   *
-   * @api public
-   * @memberOf MongooseArray
-   * @instance
-   * @method $shift
-   * @see mongodb https://www.mongodb.com/docs/manual/reference/operator/update/pop/
-   */
-
-  $shift() {
-    this._registerAtomic('$pop', -1);
-    this._markModified();
-
-    // only allow shifting once
-    const __array = this.__array;
-    if (__array._shifted) {
-      return;
-    }
-    __array._shifted = true;
-
-    return [].shift.call(__array);
-  },
-
-  /**
-   * Pops the array atomically at most one time per document `save()`.
-   *
-   * #### NOTE:
-   *
-   * _Calling this multiple times on an array before saving sends the same command as calling it once._
-   * _This update is implemented using the MongoDB [$pop](https://www.mongodb.com/docs/manual/reference/operator/update/pop/) method which enforces this restriction._
-   *
-   *      doc.array = [1,2,3];
-   *
-   *      const popped = doc.array.$pop();
-   *      console.log(popped); // 3
-   *      console.log(doc.array); // [1,2]
-   *
-   *      // no affect
-   *      popped = doc.array.$pop();
-   *      console.log(doc.array); // [1,2]
-   *
-   *      doc.save(function (err) {
-   *        if (err) return handleError(err);
-   *
-   *        // we saved, now $pop works again
-   *        popped = doc.array.$pop();
-   *        console.log(popped); // 2
-   *        console.log(doc.array); // [1]
-   *      })
-   *
-   * @api public
-   * @method $pop
-   * @memberOf MongooseArray
-   * @instance
-   * @see mongodb https://www.mongodb.com/docs/manual/reference/operator/update/pop/
-   * @method $pop
-   * @memberOf MongooseArray
-   */
-
-  $pop() {
-    this._registerAtomic('$pop', 1);
-    this._markModified();
-
-    // only allow popping once
-    if (this._popped) {
-      return;
-    }
-    this._popped = true;
-
-    return [].pop.call(this);
-  },
-
-  /*!
-   * ignore
-   */
-
-  $schema() {
-    return this[arraySchemaSymbol];
-  },
-
-  /**
-   * Casts a member based on this arrays schema.
-   *
-   * @param {any} value
-   * @return {any} the casted value
-   * @method _cast
-   * @api private
-   * @memberOf MongooseArray
-   */
-
-  _cast(value) {
-    let populated = false;
-    let Model;
-
-    const parent = this[arrayParentSymbol];
-    if (parent) {
-      populated = parent.$populated(this[arrayPathSymbol], true);
-    }
-
-    if (populated && value != null) {
-      // cast to the populated Models schema
-      Model = populated.options[populateModelSymbol];
-      if (Model == null) {
-        throw new MongooseError('No populated model found for path `' + this[arrayPathSymbol] + '`. This is likely a bug in Mongoose, please report an issue on github.com/Automattic/mongoose.');
-      }
-
-      // only objects are permitted so we can safely assume that
-      // non-objects are to be interpreted as _id
-      if (Buffer.isBuffer(value) ||
-          isBsonType(value, 'ObjectId') || !utils.isObject(value)) {
-        value = { _id: value };
-      }
-
-      // gh-2399
-      // we should cast model only when it's not a discriminator
-      const isDisc = value.schema?.discriminatorMapping?.key !== undefined;
-      if (!isDisc) {
-        value = new Model(value);
-      }
-      return this[arraySchemaSymbol].embeddedSchemaType.applySetters(value, parent, true);
-    }
-
-    return this[arraySchemaSymbol].embeddedSchemaType.applySetters(value, parent, false);
-  },
-
-  /**
-   * Internal helper for .map()
-   *
-   * @api private
-   * @return {number}
-   * @method _mapCast
-   * @memberOf MongooseArray
-   */
-
-  _mapCast(val, index) {
-    return this._cast(val, this.length + index);
-  },
-
-  /**
-   * Marks this array as modified.
-   *
-   * If it bubbles up from an embedded document change, then it takes the following arguments (otherwise, takes 0 arguments)
-   *
-   * @param {ArraySubdocument} subdoc the embedded doc that invoked this method on the Array
-   * @param {string} embeddedPath the path which changed in the subdoc
-   * @method _markModified
-   * @api private
-   * @memberOf MongooseArray
-   */
-
-  _markModified(elem) {
-    const parent = this[arrayParentSymbol];
-    let dirtyPath;
-
-    if (parent) {
-      dirtyPath = this[arrayPathSymbol];
-
-      if (arguments.length) {
-        dirtyPath = dirtyPath + '.' + elem;
-      }
-
-      if (dirtyPath != null && dirtyPath.endsWith('.$')) {
-        return this;
-      }
-
-      parent.markModified(dirtyPath, arguments.length !== 0 ? elem : parent);
-    }
-
-    return this;
-  },
-
-  /**
-   * Register an atomic operation with the parent.
-   *
-   * @param {Array} op operation
-   * @param {any} val
-   * @method _registerAtomic
-   * @api private
-   * @memberOf MongooseArray
-   */
-
-  _registerAtomic(op, val) {
-    if (this[slicedSymbol]) {
-      return;
-    }
-    if (op === '$set') {
-      // $set takes precedence over all other ops.
-      // mark entire array modified.
-      this[arrayAtomicsSymbol] = { $set: val };
-      cleanModifiedSubpaths(this[arrayParentSymbol], this[arrayPathSymbol]);
-      this._markModified();
-      return this;
-    }
-
-    const atomics = this[arrayAtomicsSymbol];
-
-    // reset pop/shift after save
-    if (op === '$pop' && !('$pop' in atomics)) {
-      const _this = this;
-      this[arrayParentSymbol].once('save', function() {
-        _this._popped = _this._shifted = null;
-      });
-    }
-
-    // check for impossible $atomic combos (Mongo denies more than one
-    // $atomic op on a single path
-    if (atomics.$set || utils.hasOwnKeys(atomics) && !(op in atomics)) {
-      // a different op was previously registered.
-      // save the entire thing.
-      this[arrayAtomicsSymbol] = { $set: this };
-      return this;
-    }
-
-    let selector;
-
-    if (op === '$pullAll' || op === '$addToSet') {
-      atomics[op] || (atomics[op] = []);
-      atomics[op] = atomics[op].concat(val);
-    } else if (op === '$pullDocs') {
-      const pullOp = atomics['$pull'] || (atomics['$pull'] = {});
-      if (val[0] instanceof ArraySubdocument) {
-        selector = pullOp['$or'] || (pullOp['$or'] = []);
-        Array.prototype.push.apply(selector, val.map(v => {
-          return v.toObject({
-            transform: (doc, ret) => {
-              if (v == null || v.$__ == null) {
-                return ret;
-              }
-
-              Object.keys(v.$__.activePaths.getStatePaths('default')).forEach(path => {
-                mpath.unset(path, ret);
-
-                _minimizePath(ret, path);
-              });
-
-              return ret;
-            },
-            virtuals: false
-          });
-        }));
-      } else {
-        selector = pullOp['_id'] || (pullOp['_id'] = { $in: [] });
-        selector['$in'] = selector['$in'].concat(val);
-      }
-    } else if (op === '$push') {
-      atomics.$push = atomics.$push || { $each: [] };
-      if (val != null && utils.hasUserDefinedProperty(val, '$each')) {
-        atomics.$push = val;
-      } else {
-        if (val.length === 1) {
-          atomics.$push.$each.push(val[0]);
-        } else if (val.length < 10000) {
-          atomics.$push.$each.push(...val);
-        } else {
-          for (const v of val) {
-            atomics.$push.$each.push(v);
-          }
-        }
-      }
-    } else {
-      atomics[op] = val;
-    }
-
-    return this;
-  },
-
-  /**
-   * Adds values to the array if not already present.
-   *
-   * #### Example:
-   *
-   *     console.log(doc.array) // [2,3,4]
-   *     const added = doc.array.addToSet(4,5);
-   *     console.log(doc.array) // [2,3,4,5]
-   *     console.log(added)     // [5]
-   *
-   * @param {...any} [args]
-   * @return {Array} the values that were added
-   * @memberOf MongooseArray
-   * @api public
-   * @method addToSet
-   */
-
-  addToSet() {
-    _checkManualPopulation(this, arguments);
-    _depopulateIfNecessary(this, arguments);
-
-    const values = [].map.call(arguments, this._mapCast, this);
-    const added = [];
-    let type = '';
-    if (values[0] instanceof ArraySubdocument) {
-      type = 'doc';
-    } else if (values[0] instanceof Date) {
-      type = 'date';
-    } else if (isBsonType(values[0], 'ObjectId')) {
-      type = 'ObjectId';
-    }
-
-    const rawValues = utils.isMongooseArray(values) ? values.__array : values;
-    const rawArray = utils.isMongooseArray(this) ? this.__array : this;
-
-    rawValues.forEach(function(v) {
-      let found;
-      const val = +v;
-      switch (type) {
-        case 'doc':
-          found = this.some(function(doc) {
-            return doc.equals(v);
-          });
-          break;
-        case 'date':
-          found = this.some(function(d) {
-            return +d === val;
-          });
-          break;
-        case 'ObjectId':
-          found = this.find(o => o.toString() === v.toString());
-          break;
-        default:
-          found = ~this.indexOf(v);
-          break;
-      }
-
-      if (!found) {
-        this._markModified();
-        rawArray.push(v);
-        this._registerAtomic('$addToSet', v);
-        [].push.call(added, v);
-      }
-    }, this);
-
-    return added;
-  },
-
-  /**
-   * Returns the number of pending atomic operations to send to the db for this array.
-   *
-   * @api private
-   * @return {number}
-   * @method hasAtomics
-   * @memberOf MongooseArray
-   */
-
-  hasAtomics() {
-    if (!utils.isPOJO(this[arrayAtomicsSymbol])) {
-      return 0;
-    }
-
-    return Object.keys(this[arrayAtomicsSymbol]).length;
-  },
-
-  /**
-   * Return whether or not the `obj` is included in the array.
-   *
-   * @param {object} obj the item to check
-   * @param {number} fromIndex
-   * @return {boolean}
-   * @api public
-   * @method includes
-   * @memberOf MongooseArray
-   */
-
-  includes(obj, fromIndex) {
-    const ret = this.indexOf(obj, fromIndex);
-    return ret !== -1;
-  },
-
-  /**
-   * Return the index of `obj` or `-1` if not found.
-   *
-   * @param {object} obj the item to look for
-   * @param {number} fromIndex
-   * @return {number}
-   * @api public
-   * @method indexOf
-   * @memberOf MongooseArray
-   */
-
-  indexOf(obj, fromIndex) {
-    if (isBsonType(obj, 'ObjectId')) {
-      obj = obj.toString();
-    }
-
-    fromIndex = fromIndex == null ? 0 : fromIndex;
-    const len = this.length;
-    for (let i = fromIndex; i < len; ++i) {
-      if (obj == this[i]) {
-        return i;
-      }
-    }
-    return -1;
-  },
-
-  /**
-   * Helper for console.log
-   *
-   * @api public
-   * @method inspect
-   * @memberOf MongooseArray
-   */
-
-  inspect() {
-    return JSON.stringify(this);
-  },
-
-  /**
-   * Pushes items to the array non-atomically.
-   *
-   * #### Note:
-   *
-   * _marks the entire array as modified, which if saved, will store it as a `$set` operation, potentially overwriting any changes that happen between when you retrieved the object and when you save it._
-   *
-   * @param {...any} [args]
-   * @api public
-   * @method nonAtomicPush
-   * @memberOf MongooseArray
-   */
-
-  nonAtomicPush() {
-    const values = [].map.call(arguments, this._mapCast, this);
-    this._markModified();
-    const ret = [].push.apply(this, values);
-    this._registerAtomic('$set', this);
-    return ret;
-  },
-
-  /**
-   * Wraps [`Array#pop`](https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/pop) with proper change tracking.
-   *
-   * #### Note:
-   *
-   * _marks the entire array as modified which will pass the entire thing to $set potentially overwriting any changes that happen between when you retrieved the object and when you save it._
-   *
-   * @see MongooseArray#$pop https://mongoosejs.com/docs/api/array.html#MongooseArray.prototype.$pop()
-   * @api public
-   * @method pop
-   * @memberOf MongooseArray
-   */
-
-  pop() {
-    this._markModified();
-    const ret = [].pop.call(this);
-    this._registerAtomic('$set', this);
-    return ret;
-  },
-
-  /**
-   * Pulls items from the array atomically. Equality is determined by casting
-   * the provided value to an embedded document and comparing using
-   * [the `Document.equals()` function.](https://mongoosejs.com/docs/api/document.html#Document.prototype.equals())
-   *
-   * #### Example:
-   *
-   *     doc.array.pull(ObjectId)
-   *     doc.array.pull({ _id: 'someId' })
-   *     doc.array.pull(36)
-   *     doc.array.pull('tag 1', 'tag 2')
-   *
-   * To remove a document from a subdocument array we may pass an object with a matching `_id`.
-   *
-   *     doc.subdocs.push({ _id: 4815162342 })
-   *     doc.subdocs.pull({ _id: 4815162342 }) // removed
-   *
-   * Or we may passing the _id directly and let mongoose take care of it.
-   *
-   *     doc.subdocs.push({ _id: 4815162342 })
-   *     doc.subdocs.pull(4815162342); // works
-   *
-   * The first pull call will result in a atomic operation on the database, if pull is called repeatedly without saving the document, a $set operation is used on the complete array instead, overwriting possible changes that happened on the database in the meantime.
-   *
-   * @param {...any} [args]
-   * @see mongodb https://www.mongodb.com/docs/manual/reference/operator/update/pull/
-   * @api public
-   * @method pull
-   * @memberOf MongooseArray
-   */
-
-  pull() {
-    const values = [].map.call(arguments, (v, i) => this._cast(v, i, { defaults: false }), this);
-    let cur = this;
-    if (utils.isMongooseArray(cur)) {
-      cur = cur.__array;
-    }
-    let i = cur.length;
-    let mem;
-    this._markModified();
-
-    while (i--) {
-      mem = cur[i];
-      if (mem instanceof Document) {
-        const some = values.some(function(v) {
-          return mem.equals(v);
-        });
-        if (some) {
-          cur.splice(i, 1);
-        }
-      } else if (~this.indexOf.call(values, mem)) {
-        cur.splice(i, 1);
-      }
-    }
-
-    if (values[0] instanceof ArraySubdocument) {
-      this._registerAtomic('$pullDocs', values.map(function(v) {
-        const _id = v.$__getValue('_id');
-        if (_id === undefined || v.$isDefault('_id')) {
-          return v;
-        }
-        return _id;
-      }));
-    } else {
-      this._registerAtomic('$pullAll', values);
-    }
-
-
-    // Might have modified child paths and then pulled, like
-    // `doc.children[1].name = 'test';` followed by
-    // `doc.children.remove(doc.children[0]);`. In this case we fall back
-    // to a `$set` on the whole array. See #3511
-    if (cleanModifiedSubpaths(this[arrayParentSymbol], this[arrayPathSymbol]) > 0) {
-      this._registerAtomic('$set', this);
-    }
-
-    return this;
-  },
-
-  /**
-   * Wraps [`Array#push`](https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/push) with proper change tracking.
-   *
-   * #### Example:
-   *
-   *     const schema = Schema({ nums: [Number] });
-   *     const Model = mongoose.model('Test', schema);
-   *
-   *     const doc = await Model.create({ nums: [3, 4] });
-   *     doc.nums.push(5); // Add 5 to the end of the array
-   *     await doc.save();
-   *
-   *     // You can also pass an object with `$each` as the
-   *     // first parameter to use MongoDB's `$position`
-   *     doc.nums.push({
-   *       $each: [1, 2],
-   *       $position: 0
-   *     });
-   *     doc.nums; // [1, 2, 3, 4, 5]
-   *
-   * @param {...object} [args]
-   * @api public
-   * @method push
-   * @memberOf MongooseArray
-   */
-
-  push() {
-    let values = arguments;
-    let atomic = values;
-    const isOverwrite = values[0] != null &&
-      utils.hasUserDefinedProperty(values[0], '$each');
-    const arr = utils.isMongooseArray(this) ? this.__array : this;
-    if (isOverwrite) {
-      atomic = values[0];
-      values = values[0].$each;
-    }
-
-    if (this[arraySchemaSymbol] == null) {
-      return _basePush.apply(this, values);
-    }
-
-    _checkManualPopulation(this, values);
-    _depopulateIfNecessary(this, values);
-
-    values = [].map.call(values, this._mapCast, this);
-    let ret;
-    const atomics = this[arrayAtomicsSymbol];
-    this._markModified();
-    if (isOverwrite) {
-      atomic.$each = values;
-
-      if ((atomics.$push && atomics.$push.$each && atomics.$push.$each.length || 0) !== 0 &&
-          atomics.$push.$position != atomic.$position) {
-        if (atomic.$position != null) {
-          [].splice.apply(arr, [atomic.$position, 0].concat(values));
-          ret = arr.length;
-        } else {
-          ret = [].push.apply(arr, values);
-        }
-
-        this._registerAtomic('$set', this);
-      } else if (atomic.$position != null) {
-        [].splice.apply(arr, [atomic.$position, 0].concat(values));
-        ret = this.length;
-      } else {
-        ret = [].push.apply(arr, values);
-      }
-    } else {
-      atomic = values;
-      ret = _basePush.apply(arr, values);
-    }
-
-    this._registerAtomic('$push', atomic);
-
-    return ret;
-  },
-
-  /**
-   * Alias of [pull](https://mongoosejs.com/docs/api/array.html#MongooseArray.prototype.pull())
-   *
-   * @see MongooseArray#pull https://mongoosejs.com/docs/api/array.html#MongooseArray.prototype.pull()
-   * @see mongodb https://www.mongodb.com/docs/manual/reference/operator/update/pull/
-   * @api public
-   * @memberOf MongooseArray
-   * @instance
-   * @method remove
-   */
-
-  remove() {
-    return this.pull.apply(this, arguments);
-  },
-
-  /**
-   * Sets the casted `val` at index `i` and marks the array modified.
-   *
-   * #### Example:
-   *
-   *     // given documents based on the following
-   *     const Doc = mongoose.model('Doc', new Schema({ array: [Number] }));
-   *
-   *     const doc = new Doc({ array: [2,3,4] })
-   *
-   *     console.log(doc.array) // [2,3,4]
-   *
-   *     doc.array.set(1,"5");
-   *     console.log(doc.array); // [2,5,4] // properly cast to number
-   *     doc.save() // the change is saved
-   *
-   *     // VS not using array#set
-   *     doc.array[1] = "5";
-   *     console.log(doc.array); // [2,"5",4] // no casting
-   *     doc.save() // change is not saved
-   *
-   * @return {Array} this
-   * @api public
-   * @method set
-   * @memberOf MongooseArray
-   */
-
-  set(i, val, skipModified) {
-    const arr = this.__array;
-    if (skipModified) {
-      arr[i] = val;
-      return this;
-    }
-    const value = methods._cast.call(this, val, i);
-    methods._markModified.call(this, i);
-    arr[i] = value;
-    return this;
-  },
-
-  /**
-   * Wraps [`Array#shift`](https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/unshift) with proper change tracking.
-   *
-   * #### Example:
-   *
-   *     doc.array = [2,3];
-   *     const res = doc.array.shift();
-   *     console.log(res) // 2
-   *     console.log(doc.array) // [3]
-   *
-   * #### Note:
-   *
-   * _marks the entire array as modified, which if saved, will store it as a `$set` operation, potentially overwriting any changes that happen between when you retrieved the object and when you save it._
-   *
-   * @api public
-   * @method shift
-   * @memberOf MongooseArray
-   */
-
-  shift() {
-    const arr = utils.isMongooseArray(this) ? this.__array : this;
-    this._markModified();
-    const ret = [].shift.call(arr);
-    this._registerAtomic('$set', this);
-    return ret;
-  },
-
-  /**
-   * Wraps [`Array#sort`](https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/sort) with proper change tracking.
-   *
-   * #### Note:
-   *
-   * _marks the entire array as modified, which if saved, will store it as a `$set` operation, potentially overwriting any changes that happen between when you retrieved the object and when you save it._
-   *
-   * @api public
-   * @method sort
-   * @memberOf MongooseArray
-   * @see MasteringJS: Array sort https://masteringjs.io/tutorials/fundamentals/array-sort
-   */
-
-  sort() {
-    const arr = utils.isMongooseArray(this) ? this.__array : this;
-    const ret = [].sort.apply(arr, arguments);
-    this._registerAtomic('$set', this);
-    return ret;
-  },
-
-  /**
-   * Wraps [`Array#splice`](https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/splice) with proper change tracking and casting.
-   *
-   * #### Note:
-   *
-   * _marks the entire array as modified, which if saved, will store it as a `$set` operation, potentially overwriting any changes that happen between when you retrieved the object and when you save it._
-   *
-   * @api public
-   * @method splice
-   * @memberOf MongooseArray
-   * @see MasteringJS: Array splice https://masteringjs.io/tutorials/fundamentals/array-splice
-   */
-
-  splice() {
-    let ret;
-    const arr = utils.isMongooseArray(this) ? this.__array : this;
-
-    this._markModified();
-    _checkManualPopulation(this, Array.prototype.slice.call(arguments, 2));
-
-    if (arguments.length) {
-      let vals;
-      if (this[arraySchemaSymbol] == null) {
-        vals = arguments;
-      } else {
-        vals = [];
-        for (let i = 0; i < arguments.length; ++i) {
-          vals[i] = i < 2 ?
-            arguments[i] :
-            this._cast(arguments[i], arguments[0] + (i - 2));
-        }
-      }
-
-      ret = [].splice.apply(arr, vals);
-      this._registerAtomic('$set', this);
-    }
-
-    return ret;
-  },
-
-  /*!
-   * ignore
-   */
-
-  toBSON() {
-    return this.toObject(internalToObjectOptions);
-  },
-
-  /**
-   * Returns a native js Array.
-   *
-   * @param {object} options
-   * @return {Array}
-   * @api public
-   * @method toObject
-   * @memberOf MongooseArray
-   */
-
-  toObject(options) {
-    const arr = utils.isMongooseArray(this) ? this.__array : this;
-    if (options?.depopulate) {
-      options = clone(options);
-      options._isNested = true;
-      // Ensure return value is a vanilla array, because in Node.js 6+ `map()`
-      // is smart enough to use the inherited array's constructor.
-      return [].concat(arr).map(function(doc) {
-        return doc instanceof Document
-          ? doc.toObject(options)
-          : doc;
-      });
-    }
-
-    return [].concat(arr);
-  },
-
-  $toObject() {
-    return this.constructor.prototype.toObject.apply(this, arguments);
-  },
-  /**
-   * Wraps [`Array#unshift`](https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/unshift) with proper change tracking.
-   *
-   * #### Note:
-   *
-   * _marks the entire array as modified, which if saved, will store it as a `$set` operation, potentially overwriting any changes that happen between when you retrieved the object and when you save it._
-   *
-   * @api public
-   * @method unshift
-   * @memberOf MongooseArray
-   */
-
-  unshift() {
-    _checkManualPopulation(this, arguments);
-
-    let values;
-    if (this[arraySchemaSymbol] == null) {
-      values = arguments;
-    } else {
-      values = [].map.call(arguments, this._cast, this);
-    }
-
-    const arr = utils.isMongooseArray(this) ? this.__array : this;
-    this._markModified();
-    [].unshift.apply(arr, values);
-    this._registerAtomic('$set', this);
-    return this.length;
+function Kareem() {
+  this._pres = new Map();
+  this._posts = new Map();
+}
+
+Kareem.skipWrappedFunction = function skipWrappedFunction() {
+  if (!(this instanceof Kareem.skipWrappedFunction)) {
+    return new Kareem.skipWrappedFunction(...arguments);
   }
+
+  this.args = [...arguments];
+};
+
+Kareem.overwriteResult = function overwriteResult() {
+  if (!(this instanceof Kareem.overwriteResult)) {
+    return new Kareem.overwriteResult(...arguments);
+  }
+
+  this.args = [...arguments];
+};
+
+Kareem.overwriteArguments = function overwriteArguments() {
+  if (!(this instanceof Kareem.overwriteArguments)) {
+    return new Kareem.overwriteArguments(...arguments);
+  }
+
+  this.args = [...arguments];
+};
+
+/**
+ * Execute all "pre" hooks for "name"
+ * @param {String} name The hook name to execute
+ * @param {*} context Overwrite the "this" for the hook
+ * @param {Array} args arguments passed to the pre hooks
+ * @param {Object} [options] Optional options
+ * @param {Function} [options.filter] Filter function to select which hooks to run
+ * @returns {Array} The potentially modified arguments
+ */
+Kareem.prototype.execPre = async function execPre(name, context, args, options) {
+  let pres = this._pres.get(name) || [];
+  if (options?.filter) {
+    pres = pres.filter(options.filter);
+  }
+  const numPres = pres.length;
+  let $args = args;
+  let skipWrappedFunction = null;
+
+  if (!numPres) {
+    return $args;
+  }
+
+  for (const pre of pres) {
+    try {
+      const maybePromiseLike = pre.fn.apply(context, $args);
+      if (isPromiseLike(maybePromiseLike)) {
+        const result = await maybePromiseLike;
+        if (result instanceof Kareem.overwriteArguments) {
+          $args = result.args;
+        }
+      } else if (maybePromiseLike instanceof Kareem.overwriteArguments) {
+        $args = maybePromiseLike.args;
+      }
+    } catch (error) {
+      if (error instanceof Kareem.skipWrappedFunction) {
+        skipWrappedFunction = error;
+        continue;
+      }
+      if (error instanceof Kareem.overwriteArguments) {
+        $args = error.args;
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  if (skipWrappedFunction) {
+    throw skipWrappedFunction;
+  }
+
+  return $args;
+};
+
+/**
+ * Execute all "pre" hooks for "name" synchronously
+ * @param {String} name The hook name to execute
+ * @param {*} context Overwrite the "this" for the hook
+ * @param {Array} [args] Apply custom arguments to the hook
+ * @param {Object} [options] Optional options
+ * @param {Function} [options.filter] Filter function to select which hooks to run
+ * @returns {Array} The potentially modified arguments
+ */
+Kareem.prototype.execPreSync = function(name, context, args, options) {
+  let pres = this._pres.get(name) || [];
+  if (options?.filter) {
+    pres = pres.filter(options.filter);
+  }
+  const numPres = pres.length;
+  let $args = args || [];
+
+  for (let i = 0; i < numPres; ++i) {
+    const result = pres[i].fn.apply(context, $args);
+    if (result instanceof Kareem.overwriteArguments) {
+      $args = result.args;
+    }
+  }
+
+  return $args;
+};
+
+/**
+ * Execute all "post" hooks for "name"
+ * @param {String} name The hook name to execute
+ * @param {*} context Overwrite the "this" for the hook
+ * @param {Array} args Apply custom arguments to the hook
+ * @param {Object} [options] Optional options
+ * @param {Error} [options.error] Error to pass to error-handling middleware
+ * @param {Function} [options.filter] Filter function to select which hooks to run
+ * @returns {void}
+ */
+Kareem.prototype.execPost = async function execPost(name, context, args, options) {
+  let posts = this._posts.get(name) || [];
+  if (options?.filter) {
+    posts = posts.filter(options.filter);
+  }
+  const numPosts = posts.length;
+
+  let firstError = null;
+  if (options && options.error) {
+    firstError = options.error;
+  }
+
+  if (!numPosts) {
+    if (firstError != null) {
+      throw firstError;
+    }
+    return args;
+  }
+
+  let cbPromise = null;
+  let resolve;
+  let reject;
+  const nextCallback = function nextCallback(err) {
+    if (err) {
+      reject(err);
+    } else {
+      resolve();
+    }
+  };
+
+  let newArgs = args.slice();
+  _handleNumCallbackParams(newArgs, options?.numCallbackParams);
+  let numArgs = newArgs.length;
+  newArgs.push(nextCallback);
+  let errorArgs = options?.error ? [firstError, ...newArgs] : null;
+
+  for (const currentPost of posts) {
+    const post = currentPost.fn;
+
+    cbPromise = new Promise((_resolve, _reject) => {
+      resolve = _resolve;
+      reject = _reject;
+    });
+
+    if (firstError) {
+      if (isErrorHandlingMiddleware(currentPost, numArgs)) {
+        try {
+          const res = post.apply(context, errorArgs);
+          if (isPromiseLike(res)) {
+            await res;
+          } else if (post.length === numArgs + 2) {
+            // `numArgs + 2` because we added the error and the callback
+            await cbPromise;
+          }
+        } catch (error) {
+          if (error instanceof Kareem.overwriteResult) {
+            args = error.args;
+            newArgs = args.slice();
+            _handleNumCallbackParams(newArgs, options?.numCallbackParams);
+            numArgs = newArgs.length;
+            newArgs.push(nextCallback);
+            continue;
+          }
+          firstError = error;
+          errorArgs = [firstError, ...newArgs];
+        }
+      } else {
+        continue;
+      }
+    } else {
+      if (isErrorHandlingMiddleware(currentPost, numArgs)) {
+        // Skip error handlers if no error
+        continue;
+      } else {
+        let res = null;
+        try {
+          res = post.apply(context, newArgs);
+          if (isPromiseLike(res)) {
+            res = await res;
+          } else if (post.length === numArgs + 1) {
+            // If post function takes a callback, wait for the post function to call the callback
+            res = await cbPromise;
+          }
+        } catch (error) {
+          if (error instanceof Kareem.overwriteResult) {
+            args = error.args;
+            newArgs = args.slice();
+            _handleNumCallbackParams(newArgs, options?.numCallbackParams);
+            numArgs = newArgs.length;
+            newArgs.push(nextCallback);
+            errorArgs = [firstError, ...newArgs];
+            continue;
+          }
+          firstError = error;
+          errorArgs = [firstError, ...newArgs];
+          continue;
+        }
+
+        if (res instanceof Kareem.overwriteResult) {
+          args = res.args;
+          newArgs = args.slice();
+          _handleNumCallbackParams(newArgs, options?.numCallbackParams);
+          numArgs = newArgs.length;
+          newArgs.push(nextCallback);
+          continue;
+        }
+      }
+    }
+  }
+
+  if (firstError != null) {
+    throw firstError;
+  }
+
+  return args;
 };
 
 /*!
- * ignore
- */
-
-function _isAllSubdocs(docs, ref) {
-  if (!ref) {
-    return false;
-  }
-
-  for (const arg of docs) {
-    if (arg == null) {
-      return false;
-    }
-    const model = arg.constructor;
-    if (!(arg instanceof Document) ||
-      (model.modelName !== ref && model.baseModelName !== ref)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/*!
- * Minimize _just_ empty objects along the path chain specified
- * by `parts`, ignoring all other paths. Useful in cases where
- * you want to minimize after unsetting a path.
+ * Handle the `numCallbackParams` option for `execPostSync`: fill `newArgs` with `null` until
+ * length is `numCallbackParams` if `numCallbackParams` is a number.
  *
- * #### Example:
- *
- *     const obj = { foo: { bar: { baz: {} } }, a: {} };
- *     _minimizePath(obj, 'foo.bar.baz');
- *     obj; // { a: {} }
+ * @param {Array} newArgs The arguments to fill
+ * @param {number|null|undefined} numCallbackParams The number of callback parameters
  */
 
-function _minimizePath(obj, parts, i) {
-  if (typeof parts === 'string') {
-    if (parts.indexOf('.') === -1) {
-      return;
-    }
-
-    parts = mpath.stringToParts(parts);
-  }
-  i = i || 0;
-  if (i >= parts.length) {
-    return;
-  }
-  if (obj == null || typeof obj !== 'object') {
-    return;
-  }
-
-  _minimizePath(obj[parts[0]], parts, i + 1);
-  if (obj[parts[0]] != null && typeof obj[parts[0]] === 'object' && utils.hasOwnKeys(obj[parts[0]]) === false) {
-    delete obj[parts[0]];
-  }
-}
-
-/*!
- * ignore
- */
-
-function _checkManualPopulation(arr, docs) {
-  const ref = arr == null ?
-    null :
-    arr[arraySchemaSymbol]?.embeddedSchemaType?.options?.ref || null;
-  if (arr.length === 0 &&
-      docs.length !== 0) {
-    if (_isAllSubdocs(docs, ref)) {
-      arr[arrayParentSymbol].$populated(arr[arrayPathSymbol], [], {
-        [populateModelSymbol]: docs[0].constructor
-      });
+function _handleNumCallbackParams(newArgs, numCallbackParams) {
+  if (typeof numCallbackParams === 'number' && numCallbackParams > newArgs.length) {
+    for (let i = newArgs.length; i < numCallbackParams; ++i) {
+      newArgs.push(null);
     }
   }
 }
 
-/*!
- * If `docs` isn't all instances of the right model, depopulate `arr`
+/**
+ * Execute all "post" hooks for "name" synchronously
+ * @param {String} name The hook name to execute
+ * @param {*} context Overwrite the "this" for the hook
+ * @param {Array} args Apply custom arguments to the hook
+ * @param {Object} [options] Optional options
+ * @param {Function} [options.filter] Filter function to select which hooks to run
+ * @returns {Array} The used arguments
  */
-
-function _depopulateIfNecessary(arr, docs) {
-  const ref = arr == null ?
-    null :
-    arr[arraySchemaSymbol]?.embeddedSchemaType?.options?.ref || null;
-  const parentDoc = arr[arrayParentSymbol];
-  const path = arr[arrayPathSymbol];
-  if (!ref || !parentDoc.populated(path)) {
-    return;
+Kareem.prototype.execPostSync = function(name, context, args, options) {
+  let posts = this._posts.get(name) || [];
+  if (options?.filter) {
+    posts = posts.filter(options.filter);
   }
-  for (const doc of docs) {
-    if (doc == null) {
+  const numPosts = posts.length;
+
+  for (let i = 0; i < numPosts; ++i) {
+    const res = posts[i].fn.apply(context, args || []);
+    if (res instanceof Kareem.overwriteResult) {
+      args = res.args;
+    }
+  }
+
+  return args;
+};
+
+/**
+ * Create a synchronous wrapper for "fn"
+ * @param {String} name The name of the hook
+ * @param {Function} fn The function to wrap
+ * @param {*} context Overwrite the "this" for the hook. If null/undefined, uses the calling context.
+ * @param {Object} [options] Options for the wrapper
+ * @param {Function} [options.getOptions] Function that receives the wrapper arguments and returns options for execPreSync/execPostSync. Can return `{ filter }` for both, or `{ pre: { filter }, post: { filter } }` for separate options.
+ * @returns {Function} The wrapped function
+ */
+Kareem.prototype.createWrapperSync = function(name, fn, context, options) {
+  const _this = this;
+  const getOptions = options?.getOptions;
+  return function syncWrapper() {
+    const _context = context ?? this;
+    const args = Array.from(arguments);
+    const execOptions = typeof getOptions === 'function' ? getOptions(args) : {};
+    const preOptions = execOptions.pre ?? execOptions;
+    const postOptions = execOptions.post ?? execOptions;
+
+    const modifiedArgs = _this.execPreSync(name, _context, args, preOptions);
+
+    const toReturn = fn.apply(_context, modifiedArgs);
+
+    const result = _this.execPostSync(name, _context, [toReturn], postOptions);
+
+    return result[0];
+  };
+};
+
+/**
+ * Executes pre hooks, followed by the wrapped function, followed by post hooks.
+ * @param {String} name The name of the hook
+ * @param {Function} fn The function for the hook
+ * @param {*} context Overwrite the "this" for the hook
+ * @param {Array} args Apply custom arguments to the hook
+ * @param {Object} [options] Additional options for the hook
+ * @param {Function} [options.getOptions] Function that receives `args` and returns options for execPre/execPost. Can return `{ filter }` for both, or `{ pre: { filter }, post: { filter } }` for separate options.
+ * @returns {Promise<any>} The wrapped function's result, potentially modified by post hooks
+ */
+Kareem.prototype.wrap = async function wrap(name, fn, context, args, options) {
+  const getOptions = options?.getOptions;
+  const execOptions = typeof getOptions === 'function' ? getOptions(args) : {};
+  const preOptions = execOptions.pre ?? execOptions;
+  const postOptions = execOptions.post ?? execOptions;
+
+  let ret;
+  let skipWrappedFunction = false;
+  let modifiedArgs = args;
+  try {
+    modifiedArgs = await this.execPre(name, context, args, preOptions);
+  } catch (error) {
+    if (error instanceof Kareem.skipWrappedFunction) {
+      ret = error.args;
+      skipWrappedFunction = true;
+    } else {
+      await this.execPost(name, context, args, { ...options, ...postOptions, error });
+    }
+  }
+
+  if (!skipWrappedFunction) {
+    ret = await fn.apply(context, modifiedArgs);
+  }
+
+  ret = await this.execPost(name, context, [ret], { ...options, ...postOptions });
+
+  return ret[0];
+};
+
+/**
+ * Filter current instance for something specific and return the filtered clone
+ * @param {Function} fn The filter function
+ * @returns {Kareem} The cloned and filtered instance
+ */
+Kareem.prototype.filter = function(fn) {
+  const clone = this.clone();
+
+  const pres = Array.from(clone._pres.keys());
+  for (const name of pres) {
+    const hooks = this._pres.get(name).
+      map(h => Object.assign({}, h, { name: name })).
+      filter(fn);
+
+    if (hooks.length === 0) {
+      clone._pres.delete(name);
       continue;
     }
-    if (typeof doc !== 'object' || doc instanceof String || doc instanceof Number || doc instanceof Buffer || utils.isMongooseType(doc)) {
-      parentDoc.depopulate(path);
-      break;
+
+    clone._pres.set(name, hooks);
+  }
+
+  const posts = Array.from(clone._posts.keys());
+  for (const name of posts) {
+    const hooks = this._posts.get(name).
+      map(h => Object.assign({}, h, { name: name })).
+      filter(fn);
+
+    if (hooks.length === 0) {
+      clone._posts.delete(name);
+      continue;
     }
-  }
-}
 
-const returnVanillaArrayMethods = [
-  'filter',
-  'flat',
-  'flatMap',
-  'map',
-  'slice'
-];
-for (const method of returnVanillaArrayMethods) {
-  if (Array.prototype[method] == null) {
-    continue;
+    clone._posts.set(name, hooks);
   }
 
-  methods[method] = function() {
-    const _arr = utils.isMongooseArray(this) ? this.__array : this;
-    const arr = [].concat(_arr);
+  return clone;
+};
 
-    return arr[method].apply(arr, arguments);
+/**
+ * Check for a "name" to exist either in pre or post hooks
+ * @param {String} name The name of the hook
+ * @returns {Boolean} "true" if found, "false" otherwise
+ */
+Kareem.prototype.hasHooks = function(name) {
+  return this._pres.has(name) || this._posts.has(name);
+};
+
+/**
+ * Create a Wrapper for "fn" on "name" and return the wrapped function
+ * @param {String} name The name of the hook
+ * @param {Function} fn The function to wrap
+ * @param {*} context Overwrite the "this" for the hook. If null/undefined, uses the calling context.
+ * @param {Object} [options]
+ * @param {Function} [options.getOptions] Function that receives the wrapper arguments and returns options for execPre/execPost. Can return `{ filter }` for both, or `{ pre: { filter }, post: { filter } }` for separate options.
+ * @returns {Function} The wrapped function
+ */
+Kareem.prototype.createWrapper = function(name, fn, context, options) {
+  const _this = this;
+  if (!this.hasHooks(name)) {
+    // Fast path: if there's no hooks for this function, just return the function
+    return fn;
+  }
+  return function kareemWrappedFunction() {
+    const _context = context ?? this;
+    return _this.wrap(name, fn, _context, Array.from(arguments), options);
   };
+};
+
+/**
+ * Register a new hook for "pre"
+ * @param {String} name The name of the hook
+ * @param {Object} [options]
+ * @param {Function} fn The function to register for "name"
+ * @param {never} error Unused
+ * @param {Boolean} [unshift] Wheter to "push" or to "unshift" the new hook
+ * @returns {Kareem}
+ */
+Kareem.prototype.pre = function(name, options, fn, error, unshift) {
+  if (typeof options === 'function') {
+    fn = options;
+    options = {};
+  } else if (options == null) {
+    options = {};
+  }
+
+  const pres = this._pres.get(name) || [];
+  this._pres.set(name, pres);
+
+  if (typeof fn !== 'function') {
+    throw new Error('pre() requires a function, got "' + typeof fn + '"');
+  }
+
+  if (unshift) {
+    pres.unshift(Object.assign({}, options, { fn: fn }));
+  } else {
+    pres.push(Object.assign({}, options, { fn: fn }));
+  }
+
+  return this;
+};
+
+/**
+ * Register a new hook for "post"
+ * @param {String} name The name of the hook
+ * @param {Object} [options]
+ * @param {Boolean} [options.errorHandler] Whether this is an error handler
+ * @param {Function} fn The function to register for "name"
+ * @param {Boolean} [unshift] Wheter to "push" or to "unshift" the new hook
+ * @returns {Kareem}
+ */
+Kareem.prototype.post = function(name, options, fn, unshift) {
+  const posts = this._posts.get(name) || [];
+
+  if (typeof options === 'function') {
+    unshift = !!fn;
+    fn = options;
+    options = {};
+  }
+
+  if (typeof fn !== 'function') {
+    throw new Error('post() requires a function, got "' + typeof fn + '"');
+  }
+
+  if (unshift) {
+    posts.unshift(Object.assign({}, options, { fn: fn }));
+  } else {
+    posts.push(Object.assign({}, options, { fn: fn }));
+  }
+  this._posts.set(name, posts);
+  return this;
+};
+
+/**
+ * Register a new error handler for "name"
+ * @param {String} name The name of the hook
+ * @param {Object} [options]
+ * @param {Function} fn The function to register for "name"
+ * @param {Boolean} [unshift] Wheter to "push" or to "unshift" the new hook
+ * @returns {Kareem}
+ */
+
+Kareem.prototype.postError = function postError(name, options, fn, unshift) {
+  if (typeof options === 'function') {
+    unshift = !!fn;
+    fn = options;
+    options = {};
+  }
+  return this.post(name, { ...options, errorHandler: true }, fn, unshift);
+};
+
+/**
+ * Clone the current instance
+ * @returns {Kareem} The cloned instance
+ */
+Kareem.prototype.clone = function() {
+  const n = new Kareem();
+
+  for (const key of this._pres.keys()) {
+    const clone = this._pres.get(key).slice();
+    n._pres.set(key, clone);
+  }
+  for (const key of this._posts.keys()) {
+    n._posts.set(key, this._posts.get(key).slice());
+  }
+
+  return n;
+};
+
+/**
+ * Merge "other" into self or "clone"
+ * @param {Kareem} other The instance to merge with
+ * @param {Kareem} [clone] The instance to merge onto (if not defined, using "this")
+ * @returns {Kareem} The merged instance
+ */
+Kareem.prototype.merge = function(other, clone) {
+  clone = arguments.length === 1 ? true : clone;
+  const ret = clone ? this.clone() : this;
+
+  for (const key of other._pres.keys()) {
+    const sourcePres = ret._pres.get(key) || [];
+    const deduplicated = other._pres.get(key).
+      // Deduplicate based on `fn`
+      filter(p => sourcePres.map(_p => _p.fn).indexOf(p.fn) === -1);
+    const combined = sourcePres.concat(deduplicated);
+    ret._pres.set(key, combined);
+  }
+  for (const key of other._posts.keys()) {
+    const sourcePosts = ret._posts.get(key) || [];
+    const deduplicated = other._posts.get(key).
+      filter(p => sourcePosts.indexOf(p) === -1);
+    ret._posts.set(key, sourcePosts.concat(deduplicated));
+  }
+
+  return ret;
+};
+
+function isPromiseLike(v) {
+  return (typeof v === 'object' && v !== null && typeof v.then === 'function');
 }
 
-module.exports = methods;
+function isErrorHandlingMiddleware(post, numArgs) {
+  if (post.errorHandler) {
+    return true;
+  }
+  return post.fn.length === numArgs + 2;
+}
+
+module.exports = Kareem;

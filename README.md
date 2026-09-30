@@ -1,321 +1,440 @@
-# BSON parser
+# kareem
 
-BSON is short for "Binary JSON," and is the binary-encoded serialization of JSON-like documents.
-You can learn more about it in [the specification](http://bsonspec.org).
+  [![Build Status](https://github.com/mongoosejs/kareem/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/mongoosejs/kareem/actions/workflows/test.yml)
+  <!--[![Coverage Status](https://img.shields.io/coveralls/vkarpov15/kareem.svg)](https://coveralls.io/r/vkarpov15/kareem)-->
 
-### Table of Contents
+Re-imagined take on the [hooks](http://npmjs.org/package/hooks) module, meant to offer additional flexibility in allowing you to execute hooks whenever necessary, as opposed to simply wrapping a single function.
 
-- [Usage](#usage)
-- [Bugs/Feature Requests](#bugs--feature-requests)
-- [Installation](#installation)
-- [Documentation](#documentation)
-- [FAQ](#faq)
+Named for the NBA's 2nd all-time leading scorer Kareem Abdul-Jabbar, known for his mastery of the [hook shot](http://en.wikipedia.org/wiki/Kareem_Abdul-Jabbar#Skyhook)
 
+<img src="http://upload.wikimedia.org/wikipedia/commons/0/00/Kareem-Abdul-Jabbar_Lipofsky.jpg" width="220">
 
-### Release Integrity
+<!--DOCS START-->
 
-Releases are created automatically and signed using the [Node team's GPG key](https://pgp.mongodb.com/node-driver.asc). All release packages provided as part of a GitHub release are signed. To verify the provided packages, download the key and import it using gpg:
+# API
 
-```shell
-gpg --import node-driver.asc
-```
+## pre hooks
 
-The GitHub release contains a detached signature file for the NPM package (named
-`bson-X.Y.Z.tgz.sig`).
+Much like [hooks](https://npmjs.org/package/hooks), kareem lets you define
+pre and post hooks: pre hooks are called before a given function executes.
+Unlike hooks, kareem stores hooks and other internal state in a separate
+object, rather than relying on inheritance. Furthermore, kareem exposes
+an `execPre()` function that allows you to execute your pre hooks when
+appropriate, giving you more fine-grained control over your function hooks.
 
-The following command returns the link npm package. 
-```shell
-npm view bson@vX.Y.Z dist.tarball 
-```
-
-Using the result of the above command, a `curl` command can return the official npm package for the release.
-
-To verify the integrity of the downloaded package, run the following command:
-```shell
-gpg --verify bson-X.Y.Z.tgz.sig bson-X.Y.Z.tgz
-```
-
->[!Note]
-No GPG verification is done when using npm to install the package. The contents of the GitHub tarball and npm's tarball are identical.
-
-Releases published to the npm registry also include a [provenance attestation](https://docs.npmjs.com/generating-provenance-statements), which cryptographically links the package to its source repository and build workflow. To verify provenance:
-
-```shell
-npm audit signatures
-```
-
-## Bugs / Feature Requests
-
-Think you've found a bug? Want to see a new feature in `bson`? Please open a case in our issue management tool, JIRA:
-
-1. Create an account and login: [jira.mongodb.org](https://jira.mongodb.org)
-2. Navigate to the NODE project: [jira.mongodb.org/browse/NODE](https://jira.mongodb.org/browse/NODE)
-3. Click **Create Issue** - Please provide as much information as possible about the issue and how to reproduce it.
-
-Bug reports in JIRA for the NODE driver project are **public**.
-
-## Usage
-
-To build a new version perform the following operations:
-
-```
-npm install
-npm run build
-```
-
-### Node.js or Bundling Usage
-
-When using a bundler or Node.js you can import bson using the package name:
-
-```js
-import { BSON, EJSON, ObjectId } from 'bson';
-// or:
-// const { BSON, EJSON, ObjectId } = require('bson');
-
-const bytes = BSON.serialize({ _id: new ObjectId() });
-console.log(bytes);
-const doc = BSON.deserialize(bytes);
-console.log(EJSON.stringify(doc));
-// {"_id":{"$oid":"..."}}
-```
-
-### Browser Usage
-
-If you are working directly in the browser without a bundler please use the `.mjs` bundle like so:
-
-```html
-<script type="module">
-  import { BSON, EJSON, ObjectId } from './lib/bson.mjs';
-
-  const bytes = BSON.serialize({ _id: new ObjectId() });
-  console.log(bytes);
-  const doc = BSON.deserialize(bytes);
-  console.log(EJSON.stringify(doc));
-  // {"_id":{"$oid":"..."}}
-</script>
-```
-
-## AI Agent Configuration
-
-This repository uses [agentskills.io](https://agentskills.io) conventions for AI coding agent
-instructions. `AGENTS.md` is the canonical source of truth — tool-specific files like `CLAUDE.md`
-are generated references.
-
-### Adding a nested AGENTS.md
-
-1. Create an `AGENTS.md` in the target directory.
-2. `git add` the file.
-3. Run `scripts/symlink-claude-md.sh` to generate the companion `CLAUDE.md`.
-    - Note: `scripts/symlink-claude-md.sh` is vendored from an [internal repo](https://github.com/10gen/mongohouse/blob/master/scripts/symlink-claude-md.sh) and should not be edited directly.
-4. Stage and commit the files.
-
-## Installation
-
-```sh
-npm install bson
-```
-
-### MongoDB Node.js Driver Version Compatibility
-
-Only the following version combinations with the [MongoDB Node.js Driver](https://github.com/mongodb/node-mongodb-native) are considered stable.
-
-|               | `bson@1.x` | `bson@4.x` | `bson@5.x` | `bson@6.x` | `bson@7.x` |
-| ------------- | ---------- | ---------- | ---------- | ---------- | ---------- |
-| `mongodb@7.x` | N/A        | N/A        | N/A        | N/A        | ✓          |
-| `mongodb@6.x` | N/A        | N/A        | N/A        | ✓          | N/A        |
-| `mongodb@5.x` | N/A        | N/A        | ✓          | N/A        | N/A        |
-| `mongodb@4.x` | N/A        | ✓          | N/A        | N/A        | N/A        |
-| `mongodb@3.x` | ✓          | N/A        | N/A        | N/A        | N/A        |
-
-## Documentation
-
-### BSON
-
-[API documentation](https://mongodb.github.io/node-mongodb-native/Next/modules/BSON.html)
-
-<a name="EJSON"></a>
-
-### EJSON
-
-- [EJSON](#EJSON)
-
-  - [.parse(text, [options])](#EJSON.parse)
-
-  - [.stringify(value, [replacer], [space], [options])](#EJSON.stringify)
-
-  - [.serialize(bson, [options])](#EJSON.serialize)
-
-  - [.deserialize(ejson, [options])](#EJSON.deserialize)
-
-<a name="EJSON.parse"></a>
-
-#### _EJSON_.parse(text, [options])
-
-| Param             | Type                 | Default           | Description                                                                        |
-| ----------------- | -------------------- | ----------------- | ---------------------------------------------------------------------------------- |
-| text              | <code>string</code>  |                   |                                                                                    |
-| [options]         | <code>object</code>  |                   | Optional settings                                                                  |
-| [options.relaxed] | <code>boolean</code> | <code>true</code> | Attempt to return native JS types where possible, rather than BSON types (if true) |
-
-Parse an Extended JSON string, constructing the JavaScript value or object described by that
-string.
-
-> [!WARNING]
-> If you use the result of `EJSON.parse()` in a query, update, or command, an attacker
-> can inject operators or unexpected field values that change the meaning of the
-> operation. This risk is greatest when the input text originates from a source that
-> your application does not control. Validate untrusted input before parsing it.
-> To learn more about validating input before conversion and other security best
-> practices for client libraries, see the [Client Libraries Best
-> Practices](https://www.mongodb.com/docs/drivers/client-libraries-best-practices/)
-> page in the MongoDB documentation.
-
-**Example**
-
-```js
-const { EJSON } = require('bson');
-const text = '{ "int32": { "$numberInt": "10" } }';
-
-// prints { int32: { [String: '10'] _bsontype: 'Int32', value: '10' } }
-console.log(EJSON.parse(text, { relaxed: false }));
-
-// prints { int32: 10 }
-console.log(EJSON.parse(text));
-```
-
-<a name="EJSON.stringify"></a>
-
-#### _EJSON_.stringify(value, [replacer], [space], [options])
-
-| Param             | Type                                        | Default           | Description                                                                                                                                                                                                                                                                                                                                        |
-| ----------------- | ------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| value             | <code>object</code>                         |                   | The value to convert to extended JSON                                                                                                                                                                                                                                                                                                              |
-| [replacer]        | <code>function</code> \| <code>array</code> |                   | A function that alters the behavior of the stringification process, or an array of String and Number objects that serve as a whitelist for selecting/filtering the properties of the value object to be included in the JSON string. If this value is null or not provided, all properties of the object are included in the resulting JSON string |
-| [space]           | <code>string</code> \| <code>number</code>  |                   | A String or Number object that's used to insert white space into the output JSON string for readability purposes.                                                                                                                                                                                                                                  |
-| [options]         | <code>object</code>                         |                   | Optional settings                                                                                                                                                                                                                                                                                                                                  |
-| [options.relaxed] | <code>boolean</code>                        | <code>true</code> | Enabled Extended JSON's `relaxed` mode                                                                                                                                                                                                                                                                                                             |
-| [options.legacy]  | <code>boolean</code>                        | <code>true</code> | Output in Extended JSON v1                                                                                                                                                                                                                                                                                                                         |
-
-Converts a BSON document to an Extended JSON string, optionally replacing values if a replacer
-function is specified or optionally including only the specified properties if a replacer array
-is specified.
-
-**Example**
-
-```js
-const { EJSON } = require('bson');
-const Int32 = require('mongodb').Int32;
-const doc = { int32: new Int32(10) };
-
-// prints '{"int32":{"$numberInt":"10"}}'
-console.log(EJSON.stringify(doc, { relaxed: false }));
-
-// prints '{"int32":10}'
-console.log(EJSON.stringify(doc));
-```
-
-<a name="EJSON.serialize"></a>
-
-#### _EJSON_.serialize(bson, [options])
-
-| Param     | Type                | Description                                          |
-| --------- | ------------------- | ---------------------------------------------------- |
-| bson      | <code>object</code> | The object to serialize                              |
-| [options] | <code>object</code> | Optional settings passed to the `stringify` function |
-
-Serializes an object to an Extended JSON string, and reparse it as a JavaScript object.
-
-<a name="EJSON.deserialize"></a>
-
-#### _EJSON_.deserialize(ejson, [options])
-
-| Param     | Type                | Description                                  |
-| --------- | ------------------- | -------------------------------------------- |
-| ejson     | <code>object</code> | The Extended JSON object to deserialize      |
-| [options] | <code>object</code> | Optional settings passed to the parse method |
-
-Deserializes an Extended JSON object into a plain JavaScript object with native/BSON types
-
-## Error Handling
-
-It is our recommendation to use `BSONError.isBSONError()` checks on errors and to avoid relying on parsing `error.message` and `error.name` strings in your code. We guarantee `BSONError.isBSONError()` checks will pass according to semver guidelines, but errors may be sub-classed or their messages may change at any time, even patch releases, as we see fit to increase the helpfulness of the errors.
-
-Any new errors we add to the driver will directly extend an existing error class and no existing error will be moved to a different parent class outside of a major release.
-This means `BSONError.isBSONError()` will always be able to accurately capture the errors that our BSON library throws.
-
-Hypothetical example: A collection in our Db has an issue with UTF-8 data:
-
-```ts
-let documentCount = 0;
-const cursor = collection.find({}, { utf8Validation: true });
-try {
-  for await (const doc of cursor) documentCount += 1;
-} catch (error) {
-  if (BSONError.isBSONError(error)) {
-    console.log(`Found the troublemaker UTF-8!: ${documentCount} ${error.message}`);
-    return documentCount;
-  }
-  throw error;
-}
-```
-
-## React Native
-
-js-bson requires the `atob`, `btoa` and `TextEncoder` globals.  Older versions of React Native did not support these global objects, and so 
-[js-bson v5.4.0](https://github.com/mongodb/js-bson/releases/tag/v5.4.0) added support for bundled polyfills for these globals.  Newer versions
-of Hermes includes these globals, and so the polyfills for are no longer needed in the js-bson package.
-
-If you find yourself on a version of React Native that does not have these globals, either:
-
-1. polyfill them yourself
-2. upgrade to a later version of hermes
-3. use a version of js-bson `>=5.4.0` and `<7.0.0`
-
-One additional polyfill, `crypto.getRandomValues` is recommended and can be installed with the following command:
-
-```sh
-npm install --save react-native-get-random-values
-```
-
-The following snippet should be placed at the top of the entrypoint (by default this is the root `index.js` file) for React Native projects using the BSON library. These lines must be placed for any code that imports `BSON`.
-
-```typescript
-// Required Polyfills For ReactNative
-import 'react-native-get-random-values';
-```
-
-Finally, import the `BSON` library like so:
-
-```typescript
-import { BSON, EJSON } from 'bson';
-```
-
-This will cause React Native to import the `node_modules/bson/lib/bson.rn.cjs` bundle (see the `"react-native"` setting we have in the `"exports"` section of our [package.json](./package.json).)
-
-### Technical Note about React Native module import
-
-The `"exports"` definition in our `package.json` will result in BSON's CommonJS bundle being imported in a React Native project instead of the ES module bundle. Importing the CommonJS bundle is necessary because BSON's ES module bundle of BSON uses top-level await, which is not supported syntax in [React Native's runtime hermes](https://hermesengine.dev/).
-
-## FAQ
-
-#### Why does `undefined` get converted to `null`?
-
-The `undefined` BSON type has been [deprecated for many years](http://bsonspec.org/spec.html), so this library has dropped support for it. Use the `ignoreUndefined` option (for example, from the [driver](http://mongodb.github.io/node-mongodb-native/2.2/api/MongoClient.html#connect) ) to instead remove `undefined` keys.
-
-#### How do I add custom serialization logic?
-
-This library looks for `toBSON()` functions on every path, and calls the `toBSON()` function to get the value to serialize.
+### It runs without any hooks specified
 
 ```javascript
-const BSON = require('bson');
+await hooks.execPre('cook', null);
+```
 
-class CustomSerialize {
-  toBSON() {
-    return 42;
+### It runs basic serial pre hooks
+
+pre hook functions can return a promise that resolves when finished.
+
+```javascript
+let count = 0;
+
+hooks.pre('cook', function() {
+  ++count;
+  return Promise.resolve();
+});
+
+await hooks.execPre('cook', null);
+assert.equal(1, count);
+```
+
+### It can run multiple pre hooks
+
+```javascript
+let count1 = 0;
+let count2 = 0;
+
+hooks.pre('cook', function() {
+  ++count1;
+  return Promise.resolve();
+});
+
+hooks.pre('cook', function() {
+  ++count2;
+  return Promise.resolve();
+});
+
+await hooks.execPre('cook', null);
+assert.equal(1, count1);
+assert.equal(1, count2);
+```
+
+### It can run fully synchronous pre hooks
+
+If your pre hook function takes no parameters, its assumed to be
+fully synchronous.
+
+```javascript
+let count1 = 0;
+let count2 = 0;
+
+hooks.pre('cook', function() {
+  ++count1;
+});
+
+hooks.pre('cook', function() {
+  ++count2;
+});
+
+await hooks.execPre('cook', null);
+assert.equal(1, count1);
+assert.equal(1, count2);
+```
+
+### It properly attaches context to pre hooks
+
+Pre save hook functions are bound to the second parameter to `execPre()`
+
+```javascript
+hooks.pre('cook', function() {
+  this.bacon = 3;
+});
+
+hooks.pre('cook', function() {
+  this.eggs = 4;
+});
+
+const obj = { bacon: 0, eggs: 0 };
+
+// In the pre hooks, `this` will refer to `obj`
+await hooks.execPre('cook', obj);
+assert.equal(3, obj.bacon);
+assert.equal(4, obj.eggs);
+```
+
+### It supports returning a promise
+
+You can also return a promise from your pre hooks instead of calling
+`next()`. When the returned promise resolves, kareem will kick off the
+next middleware.
+
+```javascript
+hooks.pre('cook', function() {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      this.bacon = 3;
+      resolve();
+    }, 100);
+  });
+});
+
+const obj = { bacon: 0 };
+
+await hooks.execPre('cook', obj);
+assert.equal(3, obj.bacon);
+```
+
+### It supports filtering which hooks to run
+
+You can pass a `filter` option to `execPre()` to select which hooks
+to run. The filter function receives each hook object and should return
+`true` to run the hook or `false` to skip it.
+
+```javascript
+const execed = [];
+
+const fn1 = function() { execed.push('first'); };
+fn1.skipMe = true;
+hooks.pre('cook', fn1);
+
+const fn2 = function() { execed.push('second'); };
+hooks.pre('cook', fn2);
+
+// Only runs fn2, skips fn1 because fn1.skipMe is true
+await hooks.execPre('cook', null, [], {
+  filter: hook => !hook.fn.skipMe
+});
+
+assert.deepStrictEqual(execed, ['second']);
+```
+
+## post hooks
+
+### It runs without any hooks specified
+
+```javascript
+const [eggs] = await hooks.execPost('cook', null, [1]);
+assert.equal(eggs, 1);
+```
+
+### It executes with parameters passed in
+
+```javascript
+hooks.post('cook', function(eggs, bacon, callback) {
+  assert.equal(eggs, 1);
+  assert.equal(bacon, 2);
+  callback();
+});
+
+const [eggs, bacon] = await hooks.execPost('cook', null, [1, 2]);
+assert.equal(eggs, 1);
+assert.equal(bacon, 2);
+```
+
+### It can use synchronous post hooks
+
+```javascript
+const execed = {};
+
+hooks.post('cook', function(eggs, bacon) {
+  execed.first = true;
+  assert.equal(eggs, 1);
+  assert.equal(bacon, 2);
+});
+
+hooks.post('cook', function(eggs, bacon, callback) {
+  execed.second = true;
+  assert.equal(eggs, 1);
+  assert.equal(bacon, 2);
+  callback();
+});
+
+const [eggs, bacon] = await hooks.execPost('cook', null, [1, 2]);
+assert.equal(Object.keys(execed).length, 2);
+assert.ok(execed.first);
+assert.ok(execed.second);
+assert.equal(eggs, 1);
+assert.equal(bacon, 2);
+```
+
+### It supports returning a promise
+
+You can also return a promise from your post hooks instead of calling
+`next()`. When the returned promise resolves, kareem will kick off the
+next middleware.
+
+```javascript
+hooks.post('cook', function() {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      this.bacon = 3;
+      resolve();
+    }, 100);
+  });
+});
+
+const obj = { bacon: 0 };
+
+await hooks.execPost('cook', obj, [obj]);
+assert.equal(obj.bacon, 3);
+```
+
+### It supports filtering which hooks to run
+
+You can pass a `filter` option to `execPost()` to select which hooks
+to run. The filter function receives each hook object and should return
+`true` to run the hook or `false` to skip it.
+
+```javascript
+const execed = [];
+
+const fn1 = function() { execed.push('first'); };
+fn1.skipMe = true;
+hooks.post('cook', fn1);
+
+const fn2 = function() { execed.push('second'); };
+hooks.post('cook', fn2);
+
+// Only runs fn2, skips fn1 because fn1.skipMe is true
+await hooks.execPost('cook', null, [], {
+  filter: hook => !hook.fn.skipMe
+});
+
+assert.deepStrictEqual(execed, ['second']);
+```
+
+## wrap()
+
+### It wraps pre and post calls into one call
+
+```javascript
+hooks.pre('cook', function() {
+  return new Promise(resolve => {
+    this.bacon = 3;
+    setTimeout(() => {
+      resolve();
+    }, 5);
+  });
+});
+
+hooks.pre('cook', function() {
+  this.eggs = 4;
+  return Promise.resolve();
+});
+
+hooks.pre('cook', function() {
+  this.waffles = false;
+  return Promise.resolve();
+});
+
+hooks.post('cook', function(obj) {
+  obj.tofu = 'no';
+});
+
+const obj = { bacon: 0, eggs: 0 };
+
+const args = [obj];
+
+const result = await hooks.wrap(
+  'cook',
+  function(o) {
+    assert.equal(obj.bacon, 3);
+    assert.equal(obj.eggs, 4);
+    assert.equal(obj.waffles, false);
+    assert.equal(obj.tofu, undefined);
+    return o;
+  },
+  obj,
+  args);
+
+assert.equal(obj.bacon, 3);
+assert.equal(obj.eggs, 4);
+assert.equal(obj.waffles, false);
+assert.equal(obj.tofu, 'no');
+assert.equal(result, obj);
+```
+
+### It supports filtering hooks per call with getOptions
+
+Direct `wrap()` callers can pass the same `getOptions` option that
+`createWrapper()` accepts. `getOptions` receives the call arguments and
+returns options for `execPre()`/`execPost()`, either a single `{ filter }`
+applied to both phases or separate `{ pre, post }` options.
+
+```javascript
+const execed = [];
+
+const audit = function() { execed.push('audit'); };
+audit.skipMe = true;
+hooks.pre('cook', audit);
+
+hooks.pre('cook', function() { execed.push('validate'); });
+
+const result = await hooks.wrap('cook', o => o, null, ['eggs'], {
+  getOptions: (args) => args[0] === 'eggs' ? { filter: hook => !hook.fn.skipMe } : {}
+});
+
+assert.deepStrictEqual(execed, ['validate']);
+assert.equal(result, 'eggs');
+```
+
+## createWrapper()
+
+### It wraps wrap() into a callable function
+
+```javascript
+hooks.pre('cook', function() {
+  this.bacon = 3;
+  return Promise.resolve();
+});
+
+hooks.pre('cook', function() {
+  return new Promise(resolve => {
+    this.eggs = 4;
+    setTimeout(function() {
+      resolve();
+    }, 10);
+  });
+});
+
+hooks.pre('cook', function() {
+  this.waffles = false;
+  return Promise.resolve();
+});
+
+hooks.post('cook', function(obj) {
+  obj.tofu = 'no';
+});
+
+const obj = { bacon: 0, eggs: 0 };
+
+const cook = hooks.createWrapper(
+  'cook',
+  function(o) {
+    assert.equal(3, obj.bacon);
+    assert.equal(4, obj.eggs);
+    assert.equal(false, obj.waffles);
+    assert.equal(undefined, obj.tofu);
+    return o;
+  },
+  obj);
+
+const result = await cook(obj);
+assert.equal(obj.bacon, 3);
+assert.equal(obj.eggs, 4);
+assert.equal(obj.waffles, false);
+assert.equal(obj.tofu, 'no');
+
+assert.equal(result, obj);
+```
+
+### It supports filtering hooks per call with getOptions
+
+You can pass a `getOptions` function to `createWrapper()` to choose which
+hooks run on each call. `getOptions` receives the arguments the wrapped
+function was called with and returns options for `execPre()`/`execPost()`.
+Return a single `{ filter }` to apply to both pre and post hooks, or
+`{ pre, post }` to filter them separately. `createWrapperSync()` supports
+the same option. This is how Mongoose skips user-defined middleware for a
+single operation.
+
+```javascript
+const execed = [];
+
+const audit = function() { execed.push('audit'); };
+audit.skipMe = true;
+hooks.pre('cook', audit);
+
+hooks.pre('cook', function() { execed.push('validate'); });
+
+const cook = hooks.createWrapper('cook', o => o, null, {
+  getOptions: (args) => {
+    const options = args[args.length - 1] || {};
+    return options.skipMiddleware ? { filter: hook => !hook.fn.skipMe } : {};
   }
-}
+});
 
-const obj = { answer: new CustomSerialize() };
-// "{ answer: 42 }"
-console.log(BSON.deserialize(BSON.serialize(obj)));
+// Skips the `audit` hook because the call passes `skipMiddleware: true`
+await cook({}, { skipMiddleware: true });
+assert.deepStrictEqual(execed, ['validate']);
+```
+
+## clone()
+
+### It clones a Kareem object
+
+```javascript
+const k1 = new Kareem();
+k1.pre('cook', function() {});
+k1.post('cook', function() {});
+
+const k2 = k1.clone();
+assert.deepEqual(Array.from(k2._pres.keys()), ['cook']);
+assert.deepEqual(Array.from(k2._posts.keys()), ['cook']);
+```
+
+## merge()
+
+### It pulls hooks from another Kareem object
+
+```javascript
+const k1 = new Kareem();
+const test1 = function() {};
+k1.pre('cook', test1);
+k1.post('cook', function() {});
+
+const k2 = new Kareem();
+const test2 = function() {};
+k2.pre('cook', test2);
+const k3 = k2.merge(k1);
+assert.equal(k3._pres.get('cook').length, 2);
+assert.equal(k3._pres.get('cook')[0].fn, test2);
+assert.equal(k3._pres.get('cook')[1].fn, test1);
+assert.equal(k3._posts.get('cook').length, 1);
 ```
