@@ -1,850 +1,643 @@
 # Changelog
 
-<a name="3.4.0"></a>
-## 3.4.0 (2026-08-19)
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-* feat: filter hooks per call in createWrapper via getOptions #46 #44 #43
+## [Unreleased](https://github.com/motdotla/dotenv/compare/v17.4.2...master)
 
-<a name="3.3.0"></a>
-## 3.3.0 (2026-04-14)
+## [17.4.2](https://github.com/motdotla/dotenv/compare/v17.4.1...v17.4.2) (2026-04-12)
 
-* perf: avoid cloning args on every pre/post #45
+### Changed
 
-<a name="3.2.0"></a>
-## 3.2.0 (2026-01-29)
+* Improved skill files - tightened up details ([#1009](https://github.com/motdotla/dotenv/pull/1009))
 
-* feat(exec): add filter option to execPreSync and execPostSync #44
+## [17.4.1](https://github.com/motdotla/dotenv/compare/v17.4.0...v17.4.1) (2026-04-05)
 
-<a name="3.1.0"></a>
-## 3.1.0 (2026-01-12)
+### Changed
 
-* feat(exec): add filter option to allow executing hooks based on a filter function #43
+* Change text `injecting` to `injected` ([#1005](https://github.com/motdotla/dotenv/pull/1005))
 
-<a name="3.0.0"></a>
-## 3.0.0 (2025-11-18)
+## [17.4.0](https://github.com/motdotla/dotenv/compare/v17.3.1...v17.4.0) (2026-04-01)
 
-* BREAKING CHANGE: make execPre async and drop callback support #39
-* BREAKING CHANGE: require Node 18
-* feat: overwriteArguments support #42
+### Added
 
-<a name="2.6.0"></a>
-## 2.6.0 (2024-03-04)
+* Add `skills/` folder with focused agent skills: `skills/dotenv/SKILL.md` (core usage) and `skills/dotenvx/SKILL.md` (encryption, multiple environments, variable expansion) for AI coding agent discovery via the skills.sh ecosystem (`npx skills add motdotla/dotenv`)
 
-* feat: add TypeScript types
+### Changed
 
-<a name="2.5.1"></a>
-## 2.5.1 (2023-01-06)
+* Tighten up logs: `◇ injecting env (14) from .env` ([#1003](https://github.com/motdotla/dotenv/pull/1003))
 
-* fix: avoid passing final callback to pre hook, because calling the callback can mess up hook execution #36 Automattic/mongoose#12836
+## [17.3.1](https://github.com/motdotla/dotenv/compare/v17.3.0...v17.3.1) (2026-02-12)
 
-<a name="2.5.0"></a>
-## 2.5.0 (2022-12-01)
+### Changed
 
-* feat: add errorHandler option to `post()` #34
+* Fix as2 example command in README and update spanish README
 
-<a name="2.4.0"></a>
-## 2.4.0 (2022-06-13)
+## [17.3.0](https://github.com/motdotla/dotenv/compare/v17.2.4...v17.3.0) (2026-02-12)
 
-* feat: add `overwriteResult()` and `skipWrappedFunction()` for more advanced control flow
+### Added
 
-<a name="2.3.4"></a>
-## 2.3.4 (2022-02-10)
+* Add a new README section on dotenv’s approach to the agentic future.
 
-* perf: various performance improvements #27 #24 #23 #22 #21 #20
+### Changed
 
-<a name="2.3.3"></a>
-## 2.3.3 (2021-12-26)
+* Rewrite README to get humans started more quickly with less noise while simultaneously making more accessible for llms and agents to go deeper into details.
 
-* fix: handle sync errors in `wrap()`
+## [17.2.4](https://github.com/motdotla/dotenv/compare/v17.2.3...v17.2.4) (2026-02-05)
 
-<a name="2.3.2"></a>
-## 2.3.2 (2020-12-08)
+### Changed
 
-* fix: handle sync errors in pre hooks if there are multiple hooks
+* Make `DotenvPopulateInput` accept `NodeJS.ProcessEnv` type ([#915](https://github.com/motdotla/dotenv/pull/915))
+- Give back to dotenv by checking out my newest project [vestauth](https://github.com/vestauth/vestauth). It is auth for agents. Thank you for using my software.
 
-<a name="2.3.0"></a>
-## 2.3.0 (2018-09-24)
+## [17.2.3](https://github.com/motdotla/dotenv/compare/v17.2.2...v17.2.3) (2025-09-29)
 
-* chore(release): 2.2.3 ([c8f2695](https://github.com/vkarpov15/kareem/commit/c8f2695))
-* chore(release): 2.2.4 ([a377a4f](https://github.com/vkarpov15/kareem/commit/a377a4f))
-* chore(release): 2.2.5 ([5a495e3](https://github.com/vkarpov15/kareem/commit/5a495e3))
-* fix(filter): copy async pres correctly with `filter()` ([1b1ed8a](https://github.com/vkarpov15/kareem/commit/1b1ed8a)), closes [Automattic/mongoose#3054](https://github.com/Automattic/mongoose/issues/3054)
-* feat: add filter() function ([1f641f4](https://github.com/vkarpov15/kareem/commit/1f641f4))
-* feat: support storing options on pre and post hooks ([59220b9](https://github.com/vkarpov15/kareem/commit/59220b9))
+### Changed
 
+* Fixed typescript error definition ([#912](https://github.com/motdotla/dotenv/pull/912))
 
+## [17.2.2](https://github.com/motdotla/dotenv/compare/v17.2.1...v17.2.2) (2025-09-02)
 
-<a name="2.2.3"></a>
-## <small>2.2.3 (2018-09-10)</small>
+### Added
 
-* chore: release 2.2.3 ([af653a3](https://github.com/vkarpov15/kareem/commit/af653a3))
+- 🙏 A big thank you to new sponsor [Tuple.app](https://tuple.app/dotenv) - *the premier screen sharing app for developers on macOS and Windows.* Go check them out. It's wonderful and generous of them to give back to open source by sponsoring dotenv. Give them some love back.
 
+## [17.2.1](https://github.com/motdotla/dotenv/compare/v17.2.0...v17.2.1) (2025-07-24)
 
+### Changed
 
-<a name="2.2.2"></a>
-## <small>2.2.2 (2018-09-10)</small>
+* Fix clickable tip links by removing parentheses ([#897](https://github.com/motdotla/dotenv/pull/897))
 
-* chore: release 2.2.2 ([3f0144d](https://github.com/vkarpov15/kareem/commit/3f0144d))
-* fix: allow merge() to not clone ([e628d65](https://github.com/vkarpov15/kareem/commit/e628d65))
+## [17.2.0](https://github.com/motdotla/dotenv/compare/v17.1.0...v17.2.0) (2025-07-09)
 
+### Added
 
+* Optionally specify `DOTENV_CONFIG_QUIET=true` in your environment or `.env` file to quiet the runtime log ([#889](https://github.com/motdotla/dotenv/pull/889))
+* Just like dotenv any `DOTENV_CONFIG_` environment variables take precedence over any code set options like `({quiet: false})`
 
-<a name="2.2.1"></a>
-## <small>2.2.1 (2018-06-05)</small>
+```ini
+# .env
+DOTENV_CONFIG_QUIET=true
+HELLO="World"
+```
+```js
+// index.js
+require('dotenv').config()
+console.log(`Hello ${process.env.HELLO}`)
+```
+```sh
+$ node index.js
+Hello World
 
-* chore: release 2.2.1 ([4625a64](https://github.com/vkarpov15/kareem/commit/4625a64))
-* chore: remove lockfile from git ([7f3e4e6](https://github.com/vkarpov15/kareem/commit/7f3e4e6))
-* fix: handle numAsync correctly when merging ([fef8e7e](https://github.com/vkarpov15/kareem/commit/fef8e7e))
-* test: repro issue with not copying numAsync ([952d9db](https://github.com/vkarpov15/kareem/commit/952d9db))
+or
 
+$ DOTENV_CONFIG_QUIET=true node index.js
+```
 
+## [17.1.0](https://github.com/motdotla/dotenv/compare/v17.0.1...v17.1.0) (2025-07-07)
 
-<a name="2.2.0"></a>
-## 2.2.0 (2018-06-05)
+### Added
 
-* chore: release 2.2.0 ([ff9ad03](https://github.com/vkarpov15/kareem/commit/ff9ad03))
-* fix: use maps instead of objects for _pres and _posts so `toString()` doesn't get reported as having ([55df303](https://github.com/vkarpov15/kareem/commit/55df303)), closes [Automattic/mongoose#6538](https://github.com/Automattic/mongoose/issues/6538)
+* Add additional security and configuration tips to the runtime log ([#884](https://github.com/motdotla/dotenv/pull/884))
+* Dim the tips text from the main injection information text
 
+```js
+const TIPS = [
+  '🔐 encrypt with dotenvx: https://dotenvx.com',
+  '🔐 prevent committing .env to code: https://dotenvx.com/precommit',
+  '🔐 prevent building .env in docker: https://dotenvx.com/prebuild',
+  '🛠️  run anywhere with `dotenvx run -- yourcommand`',
+  '⚙️  specify custom .env file path with { path: \'/custom/path/.env\' }',
+  '⚙️  enable debug logging with { debug: true }',
+  '⚙️  override existing env vars with { override: true }',
+  '⚙️  suppress all logs with { quiet: true }',
+  '⚙️  write to custom object with { processEnv: myObject }',
+  '⚙️  load multiple .env files with { path: [\'.env.local\', \'.env\'] }'
+]
+```
 
+## [17.0.1](https://github.com/motdotla/dotenv/compare/v17.0.0...v17.0.1) (2025-07-01)
 
-<a name="2.1.0"></a>
-## 2.1.0 (2018-05-16)
+### Changed
 
-* chore: release 2.1.0 ([ba5f1bc](https://github.com/vkarpov15/kareem/commit/ba5f1bc))
-* feat: add option to check wrapped function return value for promises ([c9d7dd1](https://github.com/vkarpov15/kareem/commit/c9d7dd1))
-* refactor: use const in wrap() ([0fc21f9](https://github.com/vkarpov15/kareem/commit/0fc21f9))
+* Patched injected log to count only populated/set keys to process.env ([#879](https://github.com/motdotla/dotenv/pull/879))
 
+## [17.0.0](https://github.com/motdotla/dotenv/compare/v16.6.1...v17.0.0) (2025-06-27)
 
+### Changed
 
-<a name="2.0.7"></a>
-## <small>2.0.7 (2018-04-28)</small>
+- Default `quiet` to false - informational (file and keys count) runtime log message shows by default ([#875](https://github.com/motdotla/dotenv/pull/875))
 
-* chore: release 2.0.7 ([0bf91e6](https://github.com/vkarpov15/kareem/commit/0bf91e6))
-* feat: add `hasHooks()` ([225f18d](https://github.com/vkarpov15/kareem/commit/225f18d)), closes [Automattic/mongoose#6385](https://github.com/Automattic/mongoose/issues/6385)
+## [16.6.1](https://github.com/motdotla/dotenv/compare/v16.6.0...v16.6.1) (2025-06-27)
 
+### Changed
 
+- Default `quiet` to true – hiding the runtime log message ([#874](https://github.com/motdotla/dotenv/pull/874))
+- NOTICE: 17.0.0 will be released with quiet defaulting to false. Use `config({ quiet: true })` to suppress.
+- And check out the new [dotenvx](https://github.com/dotenvx/dotenvx). As coding workflows evolve and agents increasingly handle secrets, encrypted .env files offer a much safer way to deploy both agents and code together with secure secrets. Simply switch `require('dotenv').config()` for `require('@dotenvx/dotenvx').config()`.
 
-<a name="2.0.6"></a>
-## <small>2.0.6 (2018-03-22)</small>
+## [16.6.0](https://github.com/motdotla/dotenv/compare/v16.5.0...v16.6.0) (2025-06-26)
 
-* chore: release 2.0.6 ([f3d406b](https://github.com/vkarpov15/kareem/commit/f3d406b))
-* fix(wrap): ensure fast path still wraps function in `nextTick()` for chaining ([7000494](https://github.com/vkarpov15/kareem/commit/7000494)), closes [Automattic/mongoose#6250](https://github.com/Automattic/mongoose/issues/6250) [dsanel/mongoose-delete#36](https://github.com/dsanel/mongoose-delete/issues/36)
+### Added
 
+- Default log helpful message `[dotenv@16.6.0] injecting env (1) from .env` ([#870](https://github.com/motdotla/dotenv/pull/870))
+- Use `{ quiet: true }` to suppress
+- Aligns dotenv more closely with [dotenvx](https://github.com/dotenvx/dotenvx).
 
+## [16.5.0](https://github.com/motdotla/dotenv/compare/v16.4.7...v16.5.0) (2025-04-07)
 
-<a name="2.0.5"></a>
-## <small>2.0.5 (2018-02-22)</small>
+### Added
 
-* chore: release 2.0.5 ([3286612](https://github.com/vkarpov15/kareem/commit/3286612))
-* perf(createWrapper): don't create wrapper if there are no hooks ([5afc5b9](https://github.com/vkarpov15/kareem/commit/5afc5b9)), closes [Automattic/mongoose#6126](https://github.com/Automattic/mongoose/issues/6126)
+- 🎉 Added new sponsor [Graphite](https://graphite.dev/?utm_source=github&utm_medium=repo&utm_campaign=dotenv) - *the AI developer productivity platform helping teams on GitHub ship higher quality software, faster*.
 
+> [!TIP]
+> **[Become a sponsor](https://github.com/sponsors/motdotla)**
+> 
+> The dotenvx README is viewed thousands of times DAILY on GitHub and NPM.
+> Sponsoring dotenv is a great way to get in front of developers and give back to the developer community at the same time.
 
+### Changed
 
-<a name="2.0.4"></a>
-## <small>2.0.4 (2018-02-08)</small>
+- Remove `_log` method. Use `_debug` [#862](https://github.com/motdotla/dotenv/pull/862)
 
-* chore: release 2.0.4 ([2ab0293](https://github.com/vkarpov15/kareem/commit/2ab0293))
+## [16.4.7](https://github.com/motdotla/dotenv/compare/v16.4.6...v16.4.7) (2024-12-03)
 
+### Changed
 
+- Ignore `.tap` folder when publishing. (oops, sorry about that everyone. - @motdotla) [#848](https://github.com/motdotla/dotenv/pull/848)
 
-<a name="2.0.3"></a>
-## <small>2.0.3 (2018-02-01)</small>
+## [16.4.6](https://github.com/motdotla/dotenv/compare/v16.4.5...v16.4.6) (2024-12-02)
 
-* chore: release 2.0.3 ([3c1abe5](https://github.com/vkarpov15/kareem/commit/3c1abe5))
-* fix: use process.nextTick() re: Automattic/mongoose#6074 ([e5bfe33](https://github.com/vkarpov15/kareem/commit/e5bfe33)), closes [Automattic/mongoose#6074](https://github.com/Automattic/mongoose/issues/6074)
+### Changed
 
+- Clean up stale dev dependencies [#847](https://github.com/motdotla/dotenv/pull/847)
+- Various README updates clarifying usage and alternative solutions using [dotenvx](https://github.com/dotenvx/dotenvx)
 
+## [16.4.5](https://github.com/motdotla/dotenv/compare/v16.4.4...v16.4.5) (2024-02-19)
 
-<a name="2.0.2"></a>
-## <small>2.0.2 (2018-01-24)</small>
+### Changed
 
-* chore: fix license ([a9d755c](https://github.com/vkarpov15/kareem/commit/a9d755c)), closes [#10](https://github.com/vkarpov15/kareem/issues/10)
-* chore: release 2.0.2 ([fe87ab6](https://github.com/vkarpov15/kareem/commit/fe87ab6))
+- 🐞 Fix recent regression when using `path` option. return to historical behavior: do not attempt to auto find `.env` if `path` set. (regression was introduced in `16.4.3`) [#814](https://github.com/motdotla/dotenv/pull/814)
 
+## [16.4.4](https://github.com/motdotla/dotenv/compare/v16.4.3...v16.4.4) (2024-02-13)
 
+### Changed
 
-<a name="2.0.1"></a>
-## <small>2.0.1 (2018-01-09)</small>
+- 🐞 Replaced chaining operator `?.` with old school `&&` (fixing node 12 failures) [#812](https://github.com/motdotla/dotenv/pull/812)
 
-* chore: release 2.0.1 with lockfile bump ([09c44fb](https://github.com/vkarpov15/kareem/commit/09c44fb))
+## [16.4.3](https://github.com/motdotla/dotenv/compare/v16.4.2...v16.4.3) (2024-02-12)
 
+### Changed
 
+- Fixed processing of multiple files in `options.path` [#805](https://github.com/motdotla/dotenv/pull/805)
 
-<a name="2.0.0"></a>
-## 2.0.0 (2018-01-09)
+## [16.4.2](https://github.com/motdotla/dotenv/compare/v16.4.1...v16.4.2) (2024-02-10)
 
-* chore: bump marked re: security ([cc564a9](https://github.com/vkarpov15/kareem/commit/cc564a9))
-* chore: release 2.0.0 ([f511d1c](https://github.com/vkarpov15/kareem/commit/f511d1c))
+### Changed
 
+- Changed funding link in package.json to [`dotenvx.com`](https://dotenvx.com)
 
+## [16.4.1](https://github.com/motdotla/dotenv/compare/v16.4.0...v16.4.1) (2024-01-24)
 
-<a name="2.0.0-rc5"></a>
-## 2.0.0-rc5 (2017-12-23)
+- Patch support for array as `path` option [#797](https://github.com/motdotla/dotenv/pull/797)
 
-* chore: fix build on node 4+5 ([6dac5a4](https://github.com/vkarpov15/kareem/commit/6dac5a4))
-* chore: fix built on node 4 + 5 again ([434ef0a](https://github.com/vkarpov15/kareem/commit/434ef0a))
-* chore: release 2.0.0-rc5 ([25a32ee](https://github.com/vkarpov15/kareem/commit/25a32ee))
+## [16.4.0](https://github.com/motdotla/dotenv/compare/v16.3.2...v16.4.0) (2024-01-23)
 
+- Add `error.code` to error messages around `.env.vault` decryption handling [#795](https://github.com/motdotla/dotenv/pull/795)
+- Add ability to find `.env.vault` file when filename(s) passed as an array [#784](https://github.com/motdotla/dotenv/pull/784)
 
+## [16.3.2](https://github.com/motdotla/dotenv/compare/v16.3.1...v16.3.2) (2024-01-18)
 
-<a name="2.0.0-rc4"></a>
-## 2.0.0-rc4 (2017-12-22)
+### Added
 
-* chore: release 2.0.0-rc4 ([49fc083](https://github.com/vkarpov15/kareem/commit/49fc083))
-* BREAKING CHANGE: deduplicate when merging hooks re: Automattic/mongoose#2945 ([d458573](https://github.com/vkarpov15/kareem/commit/d458573)), closes [Automattic/mongoose#2945](https://github.com/Automattic/mongoose/issues/2945)
+- Add debug message when no encoding set [#735](https://github.com/motdotla/dotenv/pull/735)
 
+### Changed
 
+- Fix output typing for `populate` [#792](https://github.com/motdotla/dotenv/pull/792)
+- Use subarray instead of slice [#793](https://github.com/motdotla/dotenv/pull/793)
 
-<a name="2.0.0-rc3"></a>
-## 2.0.0-rc3 (2017-12-22)
+## [16.3.1](https://github.com/motdotla/dotenv/compare/v16.3.0...v16.3.1) (2023-06-17)
 
-* chore: release 2.0.0-rc3 ([adaaa00](https://github.com/vkarpov15/kareem/commit/adaaa00))
-* feat: support returning promises from middleware functions ([05b4480](https://github.com/vkarpov15/kareem/commit/05b4480)), closes [Automattic/mongoose#3779](https://github.com/Automattic/mongoose/issues/3779)
+### Added
 
+- Add missing type definitions for `processEnv` and `DOTENV_KEY` options. [#756](https://github.com/motdotla/dotenv/pull/756)
 
+## [16.3.0](https://github.com/motdotla/dotenv/compare/v16.2.0...v16.3.0) (2023-06-16)
 
-<a name="2.0.0-rc2"></a>
-## 2.0.0-rc2 (2017-12-21)
+### Added
 
-* chore: release 2.0.0-rc2 ([76325fa](https://github.com/vkarpov15/kareem/commit/76325fa))
-* fix: ensure next() and done() run in next tick ([6c20684](https://github.com/vkarpov15/kareem/commit/6c20684))
+- Optionally pass `DOTENV_KEY` to options rather than relying on `process.env.DOTENV_KEY`. Defaults to `process.env.DOTENV_KEY` [#754](https://github.com/motdotla/dotenv/pull/754)
 
+## [16.2.0](https://github.com/motdotla/dotenv/compare/v16.1.4...v16.2.0) (2023-06-15)
 
+### Added
 
-<a name="2.0.0-rc1"></a>
-## 2.0.0-rc1 (2017-12-21)
+- Optionally write to your own target object rather than `process.env`. Defaults to `process.env`. [#753](https://github.com/motdotla/dotenv/pull/753)
+- Add import type URL to types file [#751](https://github.com/motdotla/dotenv/pull/751)
 
-* chore: improve test coverage re: Automattic/mongoose#3232 ([7b45cf0](https://github.com/vkarpov15/kareem/commit/7b45cf0)), closes [Automattic/mongoose#3232](https://github.com/Automattic/mongoose/issues/3232)
-* chore: release 2.0.0-rc1 ([9b83f52](https://github.com/vkarpov15/kareem/commit/9b83f52))
-* BREAKING CHANGE: report sync exceptions as errors, only allow calling next() and done() once ([674adcc](https://github.com/vkarpov15/kareem/commit/674adcc)), closes [Automattic/mongoose#3483](https://github.com/Automattic/mongoose/issues/3483)
+## [16.1.4](https://github.com/motdotla/dotenv/compare/v16.1.3...v16.1.4) (2023-06-04)
 
+### Added
 
+- Added `.github/` to `.npmignore` [#747](https://github.com/motdotla/dotenv/pull/747)
 
-<a name="2.0.0-rc0"></a>
-## 2.0.0-rc0 (2017-12-17)
+## [16.1.3](https://github.com/motdotla/dotenv/compare/v16.1.2...v16.1.3) (2023-05-31)
 
-* chore: release 2.0.0-rc0 ([16b44b5](https://github.com/vkarpov15/kareem/commit/16b44b5))
-* BREAKING CHANGE: drop support for node < 4 ([9cbb8c7](https://github.com/vkarpov15/kareem/commit/9cbb8c7))
-* BREAKING CHANGE: remove useLegacyPost and add several new features ([6dd8531](https://github.com/vkarpov15/kareem/commit/6dd8531)), closes [Automattic/mongoose#3232](https://github.com/Automattic/mongoose/issues/3232)
+### Removed
 
+- Removed `browser` keys for `path`, `os`, and `crypto` in package.json. These were set to false incorrectly as of 16.1. Instead, if using dotenv on the front-end make sure to include polyfills for `path`, `os`, and `crypto`. [node-polyfill-webpack-plugin](https://github.com/Richienb/node-polyfill-webpack-plugin) provides these.
 
+## [16.1.2](https://github.com/motdotla/dotenv/compare/v16.1.1...v16.1.2) (2023-05-31)
 
-<a name="1.5.0"></a>
-## 1.5.0 (2017-07-20)
+### Changed
 
-* chore: release 1.5.0 ([9c491a0](https://github.com/vkarpov15/kareem/commit/9c491a0))
-* fix: improve post error handlers results ([9928dd5](https://github.com/vkarpov15/kareem/commit/9928dd5)), closes [Automattic/mongoose#5466](https://github.com/Automattic/mongoose/issues/5466)
+- Exposed private function `_configDotenv` as `configDotenv`. [#744](https://github.com/motdotla/dotenv/pull/744)
 
+## [16.1.1](https://github.com/motdotla/dotenv/compare/v16.1.0...v16.1.1) (2023-05-30)
 
+### Added
 
-<a name="1.4.2"></a>
-## <small>1.4.2 (2017-07-06)</small>
+- Added type definition for `decrypt` function
 
-* chore: release 1.4.2 ([8d14ac5](https://github.com/vkarpov15/kareem/commit/8d14ac5))
-* fix: correct args re: Automattic/mongoose#5405 ([3f28ae6](https://github.com/vkarpov15/kareem/commit/3f28ae6)), closes [Automattic/mongoose#5405](https://github.com/Automattic/mongoose/issues/5405)
+### Changed
 
+- Fixed `{crypto: false}` in `packageJson.browser`
 
+## [16.1.0](https://github.com/motdotla/dotenv/compare/v16.0.3...v16.1.0) (2023-05-30)
 
-<a name="1.4.1"></a>
-## <small>1.4.1 (2017-04-25)</small>
+### Added
 
-* chore: release 1.4.1 ([5ecf0c2](https://github.com/vkarpov15/kareem/commit/5ecf0c2))
-* fix: handle numAsyncPres with clone() ([c72e857](https://github.com/vkarpov15/kareem/commit/c72e857)), closes [#8](https://github.com/vkarpov15/kareem/issues/8)
-* test: repro #8 ([9b4d6b2](https://github.com/vkarpov15/kareem/commit/9b4d6b2)), closes [#8](https://github.com/vkarpov15/kareem/issues/8)
+- Add `populate` convenience method [#733](https://github.com/motdotla/dotenv/pull/733)
+- Accept URL as path option [#720](https://github.com/motdotla/dotenv/pull/720)
+- Add dotenv to `npm fund` command
+- Spanish language README [#698](https://github.com/motdotla/dotenv/pull/698)
+- Add `.env.vault` support. 🎉 ([#730](https://github.com/motdotla/dotenv/pull/730))
 
+ℹ️ `.env.vault` extends the `.env` file format standard with a localized encrypted vault file. Package it securely with your production code deploys. It's cloud agnostic so that you can deploy your secrets anywhere – without [risky third-party integrations](https://techcrunch.com/2023/01/05/circleci-breach/). [read more](https://github.com/motdotla/dotenv#-deploying)
 
+### Changed
 
-<a name="1.4.0"></a>
-## 1.4.0 (2017-04-19)
+- Fixed "cannot resolve 'fs'" error on tools like Replit [#693](https://github.com/motdotla/dotenv/pull/693)
 
-* chore: release 1.4.0 ([101c5f5](https://github.com/vkarpov15/kareem/commit/101c5f5))
-* feat: add merge() function ([285325e](https://github.com/vkarpov15/kareem/commit/285325e))
+## [16.0.3](https://github.com/motdotla/dotenv/compare/v16.0.2...v16.0.3) (2022-09-29)
 
+### Changed
 
+- Added library version to debug logs ([#682](https://github.com/motdotla/dotenv/pull/682))
 
-<a name="1.3.0"></a>
-## 1.3.0 (2017-03-26)
+## [16.0.2](https://github.com/motdotla/dotenv/compare/v16.0.1...v16.0.2) (2022-08-30)
 
-* chore: release 1.3.0 ([f3a9e50](https://github.com/vkarpov15/kareem/commit/f3a9e50))
-* feat: pass function args to execPre ([4dd466d](https://github.com/vkarpov15/kareem/commit/4dd466d))
+### Added
 
+- Export `env-options.js` and `cli-options.js` in package.json for use with downstream [dotenv-expand](https://github.com/motdotla/dotenv-expand) module
 
+## [16.0.1](https://github.com/motdotla/dotenv/compare/v16.0.0...v16.0.1) (2022-05-10)
 
-<a name="1.2.1"></a>
-## <small>1.2.1 (2017-02-03)</small>
+### Changed
 
-* chore: release 1.2.1 ([d97081f](https://github.com/vkarpov15/kareem/commit/d97081f))
-* fix: filter out _kareemIgnored args for error handlers re: Automattic/mongoose#4925 ([ddc7aeb](https://github.com/vkarpov15/kareem/commit/ddc7aeb)), closes [Automattic/mongoose#4925](https://github.com/Automattic/mongoose/issues/4925)
-* fix: make error handlers handle errors in pre hooks ([af38033](https://github.com/vkarpov15/kareem/commit/af38033)), closes [Automattic/mongoose#4927](https://github.com/Automattic/mongoose/issues/4927)
+- Minor README clarifications
+- Development ONLY: updated devDependencies as recommended for development only security risks ([#658](https://github.com/motdotla/dotenv/pull/658))
 
+## [16.0.0](https://github.com/motdotla/dotenv/compare/v15.0.1...v16.0.0) (2022-02-02)
 
+### Added
 
-<a name="1.2.0"></a>
-## 1.2.0 (2017-01-02)
+- _Breaking:_ Backtick support 🎉 ([#615](https://github.com/motdotla/dotenv/pull/615))
 
-* chore: release 1.2.0 ([033225c](https://github.com/vkarpov15/kareem/commit/033225c))
-* chore: upgrade deps ([f9e9a09](https://github.com/vkarpov15/kareem/commit/f9e9a09))
-* feat: add _kareemIgnore re: Automattic/mongoose#4836 ([7957771](https://github.com/vkarpov15/kareem/commit/7957771)), closes [Automattic/mongoose#4836](https://github.com/Automattic/mongoose/issues/4836)
+If you had values containing the backtick character, please quote those values with either single or double quotes.
 
+## [15.0.1](https://github.com/motdotla/dotenv/compare/v15.0.0...v15.0.1) (2022-02-02)
 
+### Changed
 
-<a name="1.1.5"></a>
-## <small>1.1.5 (2016-12-13)</small>
+- Properly parse empty single or double quoted values 🐞 ([#614](https://github.com/motdotla/dotenv/pull/614))
 
-* chore: release 1.1.5 ([1a9f684](https://github.com/vkarpov15/kareem/commit/1a9f684))
-* fix: correct field name ([04a0e9d](https://github.com/vkarpov15/kareem/commit/04a0e9d))
+## [15.0.0](https://github.com/motdotla/dotenv/compare/v14.3.2...v15.0.0) (2022-01-31)
 
+`v15.0.0` is a major new release with some important breaking changes.
 
+### Added
 
-<a name="1.1.4"></a>
-## <small>1.1.4 (2016-12-09)</small>
+- _Breaking:_ Multiline parsing support (just works. no need for the flag.)
 
-* chore: release 1.1.4 ([ece401c](https://github.com/vkarpov15/kareem/commit/ece401c))
-* chore: run tests on node 6 ([e0cb1cb](https://github.com/vkarpov15/kareem/commit/e0cb1cb))
-* fix: only copy own properties in clone() ([dfe28ce](https://github.com/vkarpov15/kareem/commit/dfe28ce)), closes [#7](https://github.com/vkarpov15/kareem/issues/7)
+### Changed
 
+- _Breaking:_ `#` marks the beginning of a comment (UNLESS the value is wrapped in quotes. Please update your `.env` files to wrap in quotes any values containing `#`. For example: `SECRET_HASH="something-with-a-#-hash"`).
 
+..Understandably, (as some teams have noted) this is tedious to do across the entire team. To make it less tedious, we recommend using [dotenv cli](https://github.com/dotenv-org/cli) going forward. It's an optional plugin that will keep your `.env` files in sync between machines, environments, or team members.
 
-<a name="1.1.3"></a>
-## <small>1.1.3 (2016-06-27)</small>
+### Removed
 
-* chore: release 1.1.3 ([87171c8](https://github.com/vkarpov15/kareem/commit/87171c8))
-* fix: couple more issues with arg processing ([c65f523](https://github.com/vkarpov15/kareem/commit/c65f523))
+- _Breaking:_ Remove multiline option (just works out of the box now. no need for the flag.)
 
+## [14.3.2](https://github.com/motdotla/dotenv/compare/v14.3.1...v14.3.2) (2022-01-25)
 
+### Changed
 
-<a name="1.1.2"></a>
-## <small>1.1.2 (2016-06-27)</small>
+- Preserve backwards compatibility on values containing `#` 🐞 ([#603](https://github.com/motdotla/dotenv/pull/603))
 
-* chore: release 1.1.2 ([8e102b6](https://github.com/vkarpov15/kareem/commit/8e102b6))
-* fix: add early return ([4feda4e](https://github.com/vkarpov15/kareem/commit/4feda4e))
+## [14.3.1](https://github.com/motdotla/dotenv/compare/v14.3.0...v14.3.1) (2022-01-25)
 
+### Changed
 
+- Preserve backwards compatibility on exports by re-introducing the prior in-place exports 🐞 ([#606](https://github.com/motdotla/dotenv/pull/606))
 
-<a name="1.1.1"></a>
-## <small>1.1.1 (2016-06-27)</small>
+## [14.3.0](https://github.com/motdotla/dotenv/compare/v14.2.0...v14.3.0) (2022-01-24)
 
-* chore: release 1.1.1 ([8bb3050](https://github.com/vkarpov15/kareem/commit/8bb3050))
-* fix: skip error handlers if no error ([0eb3a44](https://github.com/vkarpov15/kareem/commit/0eb3a44))
+### Added
 
+- Add `multiline` option 🎉 ([#486](https://github.com/motdotla/dotenv/pull/486))
 
+## [14.2.0](https://github.com/motdotla/dotenv/compare/v14.1.1...v14.2.0) (2022-01-17)
 
-<a name="1.1.0"></a>
-## 1.1.0 (2016-05-11)
+### Added
 
-* chore: release 1.1.0 ([85332d9](https://github.com/vkarpov15/kareem/commit/85332d9))
-* chore: test on node 4 and node 5 ([1faefa1](https://github.com/vkarpov15/kareem/commit/1faefa1))
-* 100% coverage again ([c9aee4e](https://github.com/vkarpov15/kareem/commit/c9aee4e))
-* add support for error post hooks ([d378113](https://github.com/vkarpov15/kareem/commit/d378113))
-* basic setup for sync hooks #4 ([55aa081](https://github.com/vkarpov15/kareem/commit/55aa081)), closes [#4](https://github.com/vkarpov15/kareem/issues/4)
-* proof of concept for error handlers ([e4a07d9](https://github.com/vkarpov15/kareem/commit/e4a07d9))
-* refactor out handleWrapError helper ([b19af38](https://github.com/vkarpov15/kareem/commit/b19af38))
+- Add `dotenv_config_override` cli option
+- Add `DOTENV_CONFIG_OVERRIDE` command line env option
 
+## [14.1.1](https://github.com/motdotla/dotenv/compare/v14.1.0...v14.1.1) (2022-01-17)
 
+### Added
 
-<a name="1.0.1"></a>
-## <small>1.0.1 (2015-05-10)</small>
+- Add React gotcha to FAQ on README
 
-* Fix #1 ([de60dc6](https://github.com/vkarpov15/kareem/commit/de60dc6)), closes [#1](https://github.com/vkarpov15/kareem/issues/1)
-* release 1.0.1 ([6971088](https://github.com/vkarpov15/kareem/commit/6971088))
-* Run tests on iojs in travis ([adcd201](https://github.com/vkarpov15/kareem/commit/adcd201))
-* support legacy post hook behavior in wrap() ([23fa74c](https://github.com/vkarpov15/kareem/commit/23fa74c))
-* Use node 0.12 in travis ([834689d](https://github.com/vkarpov15/kareem/commit/834689d))
+## [14.1.0](https://github.com/motdotla/dotenv/compare/v14.0.1...v14.1.0) (2022-01-17)
 
+### Added
 
+- Add `override` option 🎉 ([#595](https://github.com/motdotla/dotenv/pull/595))
 
-<a name="1.0.0"></a>
-## 1.0.0 (2015-01-28)
+## [14.0.1](https://github.com/motdotla/dotenv/compare/v14.0.0...v14.0.1) (2022-01-16)
 
-* Tag 1.0.0 ([4c5a35a](https://github.com/vkarpov15/kareem/commit/4c5a35a))
+### Added
 
+- Log error on failure to load `.env` file ([#594](https://github.com/motdotla/dotenv/pull/594))
 
+## [14.0.0](https://github.com/motdotla/dotenv/compare/v13.0.1...v14.0.0) (2022-01-16)
 
-<a name="0.0.8"></a>
-## <small>0.0.8 (2015-01-27)</small>
+### Added
 
-* Add clone function ([688bba7](https://github.com/vkarpov15/kareem/commit/688bba7))
-* Add jscs for style checking ([5c93149](https://github.com/vkarpov15/kareem/commit/5c93149))
-* Bump 0.0.8 ([03c0d2f](https://github.com/vkarpov15/kareem/commit/03c0d2f))
-* Fix jscs config, add gulp rules ([9989abf](https://github.com/vkarpov15/kareem/commit/9989abf))
-* fix Makefile typo ([1f7e61a](https://github.com/vkarpov15/kareem/commit/1f7e61a))
+- _Breaking:_ Support inline comments for the parser 🎉 ([#568](https://github.com/motdotla/dotenv/pull/568))
 
+## [13.0.1](https://github.com/motdotla/dotenv/compare/v13.0.0...v13.0.1) (2022-01-16)
 
+### Changed
 
-<a name="0.0.7"></a>
-## <small>0.0.7 (2015-01-04)</small>
+* Hide comments and newlines from debug output ([#404](https://github.com/motdotla/dotenv/pull/404))
 
-* Bump 0.0.7 ([98ef173](https://github.com/vkarpov15/kareem/commit/98ef173))
-* fix LearnBoost/mongoose#2553 - use null instead of undefined for err ([9157b48](https://github.com/vkarpov15/kareem/commit/9157b48)), closes [LearnBoost/mongoose#2553](https://github.com/LearnBoost/mongoose/issues/2553)
-* Regenerate docs ([2331cdf](https://github.com/vkarpov15/kareem/commit/2331cdf))
+## [13.0.0](https://github.com/motdotla/dotenv/compare/v12.0.4...v13.0.0) (2022-01-16)
 
+### Added
 
+* _Breaking:_ Add type file for `config.js` ([#539](https://github.com/motdotla/dotenv/pull/539))
 
-<a name="0.0.6"></a>
-## <small>0.0.6 (2015-01-01)</small>
+## [12.0.4](https://github.com/motdotla/dotenv/compare/v12.0.3...v12.0.4) (2022-01-16)
 
-* Update docs and bump 0.0.6 ([92c12a7](https://github.com/vkarpov15/kareem/commit/92c12a7))
+### Changed
 
+* README updates
+* Minor order adjustment to package json format
 
+## [12.0.3](https://github.com/motdotla/dotenv/compare/v12.0.2...v12.0.3) (2022-01-15)
 
-<a name="0.0.5"></a>
-## <small>0.0.5 (2015-01-01)</small>
+### Changed
 
-* Add coverage rule to Makefile ([825a91c](https://github.com/vkarpov15/kareem/commit/825a91c))
-* Add coveralls to README ([fb52369](https://github.com/vkarpov15/kareem/commit/fb52369))
-* Add coveralls to travis ([93f6f15](https://github.com/vkarpov15/kareem/commit/93f6f15))
-* Add createWrapper() function ([ea77741](https://github.com/vkarpov15/kareem/commit/ea77741))
-* Add istanbul code coverage ([6eceeef](https://github.com/vkarpov15/kareem/commit/6eceeef))
-* Add some more comments for examples ([c5b0c6f](https://github.com/vkarpov15/kareem/commit/c5b0c6f))
-* Add travis ([e6dcb06](https://github.com/vkarpov15/kareem/commit/e6dcb06))
-* Add travis badge to docs ([ad8c9b3](https://github.com/vkarpov15/kareem/commit/ad8c9b3))
-* Add wrap() tests, 100% coverage ([6945be4](https://github.com/vkarpov15/kareem/commit/6945be4))
-* Better test coverage for execPost ([d9ad539](https://github.com/vkarpov15/kareem/commit/d9ad539))
-* Bump 0.0.5 ([69875b1](https://github.com/vkarpov15/kareem/commit/69875b1))
-* Docs fix ([15b7098](https://github.com/vkarpov15/kareem/commit/15b7098))
-* Fix silly mistake in docs generation ([50373eb](https://github.com/vkarpov15/kareem/commit/50373eb))
-* Fix typo in readme ([fec4925](https://github.com/vkarpov15/kareem/commit/fec4925))
-* Linkify travis badge ([92b25fe](https://github.com/vkarpov15/kareem/commit/92b25fe))
-* Make travis run coverage ([747157b](https://github.com/vkarpov15/kareem/commit/747157b))
-* Move travis status badge ([d52e89b](https://github.com/vkarpov15/kareem/commit/d52e89b))
-* Quick fix for coverage ([50bbddb](https://github.com/vkarpov15/kareem/commit/50bbddb))
-* Typo fix ([adea794](https://github.com/vkarpov15/kareem/commit/adea794))
+* Simplified jsdoc for consistency across editors
 
+## [12.0.2](https://github.com/motdotla/dotenv/compare/v12.0.1...v12.0.2) (2022-01-15)
 
+### Changed
 
-<a name="0.0.4"></a>
-## <small>0.0.4 (2014-12-13)</small>
+* Improve embedded jsdoc type documentation
 
-* Bump 0.0.4, run docs generation ([51a15fe](https://github.com/vkarpov15/kareem/commit/51a15fe))
-* Use correct post parameters in wrap() ([9bb5da3](https://github.com/vkarpov15/kareem/commit/9bb5da3))
+## [12.0.1](https://github.com/motdotla/dotenv/compare/v12.0.0...v12.0.1) (2022-01-15)
 
+### Changed
 
+* README updates and clarifications
 
-<a name="0.0.3"></a>
-## <small>0.0.3 (2014-12-12)</small>
+## [12.0.0](https://github.com/motdotla/dotenv/compare/v11.0.0...v12.0.0) (2022-01-15)
 
-* Add npm test script, fix small bug with args not getting passed through post ([49e3e68](https://github.com/vkarpov15/kareem/commit/49e3e68))
-* Bump 0.0.3 ([65621d8](https://github.com/vkarpov15/kareem/commit/65621d8))
-* Update readme ([901388b](https://github.com/vkarpov15/kareem/commit/901388b))
+### Removed
 
+- _Breaking:_ drop support for Flow static type checker ([#584](https://github.com/motdotla/dotenv/pull/584))
 
+### Changed
 
-<a name="0.0.2"></a>
-## <small>0.0.2 (2014-12-12)</small>
+- Move types/index.d.ts to lib/main.d.ts ([#585](https://github.com/motdotla/dotenv/pull/585))
+- Typescript cleanup ([#587](https://github.com/motdotla/dotenv/pull/587))
+- Explicit typescript inclusion in package.json ([#566](https://github.com/motdotla/dotenv/pull/566))
 
-* Add github repo and bump 0.0.2 ([59db8be](https://github.com/vkarpov15/kareem/commit/59db8be))
+## [11.0.0](https://github.com/motdotla/dotenv/compare/v10.0.0...v11.0.0) (2022-01-11)
 
+### Changed
 
+- _Breaking:_ drop support for Node v10 ([#558](https://github.com/motdotla/dotenv/pull/558))
+- Patch debug option ([#550](https://github.com/motdotla/dotenv/pull/550))
 
-<a name="0.0.1"></a>
-## <small>0.0.1 (2014-12-12)</small>
+## [10.0.0](https://github.com/motdotla/dotenv/compare/v9.0.2...v10.0.0) (2021-05-20)
 
-* Add basic docs ([ad29ea4](https://github.com/vkarpov15/kareem/commit/ad29ea4))
-* Add pre hooks ([2ffc356](https://github.com/vkarpov15/kareem/commit/2ffc356))
-* Add wrap function ([68c540c](https://github.com/vkarpov15/kareem/commit/68c540c))
-* Bump to version 0.0.1 ([a4bfd68](https://github.com/vkarpov15/kareem/commit/a4bfd68))
-* Initial commit ([4002458](https://github.com/vkarpov15/kareem/commit/4002458))
-* Initial deposit ([98fc489](https://github.com/vkarpov15/kareem/commit/98fc489))
-* Post hooks ([395b67c](https://github.com/vkarpov15/kareem/commit/395b67c))
-* Some basic setup work ([82df75e](https://github.com/vkarpov15/kareem/commit/82df75e))
-* Support sync pre hooks ([1cc1b9f](https://github.com/vkarpov15/kareem/commit/1cc1b9f))
-* Update package.json description ([978da18](https://github.com/vkarpov15/kareem/commit/978da18))
+### Added
 
+- Add generic support to parse function
+- Allow for import "dotenv/config.js"
+- Add support to resolve home directory in path via ~
 
+## [9.0.2](https://github.com/motdotla/dotenv/compare/v9.0.1...v9.0.2) (2021-05-10)
 
-<a name="2.2.5"></a>
-## <small>2.2.5 (2018-09-24)</small>
+### Changed
 
+- Support windows newlines with debug mode
 
+## [9.0.1](https://github.com/motdotla/dotenv/compare/v9.0.0...v9.0.1) (2021-05-08)
 
+### Changed
 
-<a name="2.2.4"></a>
-## <small>2.2.4 (2018-09-24)</small>
+- Updates to README
 
+## [9.0.0](https://github.com/motdotla/dotenv/compare/v8.6.0...v9.0.0) (2021-05-05)
 
+### Changed
 
+- _Breaking:_ drop support for Node v8
 
-<a name="2.2.3"></a>
-## <small>2.2.3 (2018-09-24)</small>
+## [8.6.0](https://github.com/motdotla/dotenv/compare/v8.5.1...v8.6.0) (2021-05-05)
 
-* fix(filter): copy async pres correctly with `filter()` ([1b1ed8a](https://github.com/vkarpov15/kareem/commit/1b1ed8a)), closes [Automattic/mongoose#3054](https://github.com/Automattic/mongoose/issues/3054)
-* feat: add filter() function ([1f641f4](https://github.com/vkarpov15/kareem/commit/1f641f4))
-* feat: support storing options on pre and post hooks ([59220b9](https://github.com/vkarpov15/kareem/commit/59220b9))
+### Added
 
+- define package.json in exports
 
+## [8.5.1](https://github.com/motdotla/dotenv/compare/v8.5.0...v8.5.1) (2021-05-05)
 
-<a name="2.2.3"></a>
-## <small>2.2.3 (2018-09-10)</small>
+### Changed
 
-* chore: release 2.2.3 ([af653a3](https://github.com/vkarpov15/kareem/commit/af653a3))
+- updated dev dependencies via npm audit
 
+## [8.5.0](https://github.com/motdotla/dotenv/compare/v8.4.0...v8.5.0) (2021-05-05)
 
+### Added
 
-<a name="2.2.2"></a>
-## <small>2.2.2 (2018-09-10)</small>
+- allow for `import "dotenv/config"`
 
-* chore: release 2.2.2 ([3f0144d](https://github.com/vkarpov15/kareem/commit/3f0144d))
-* fix: allow merge() to not clone ([e628d65](https://github.com/vkarpov15/kareem/commit/e628d65))
+## [8.4.0](https://github.com/motdotla/dotenv/compare/v8.3.0...v8.4.0) (2021-05-05)
 
+### Changed
 
+- point to exact types file to work with VS Code
 
-<a name="2.2.1"></a>
-## <small>2.2.1 (2018-06-05)</small>
+## [8.3.0](https://github.com/motdotla/dotenv/compare/v8.2.0...v8.3.0) (2021-05-05)
 
-* chore: release 2.2.1 ([4625a64](https://github.com/vkarpov15/kareem/commit/4625a64))
-* chore: remove lockfile from git ([7f3e4e6](https://github.com/vkarpov15/kareem/commit/7f3e4e6))
-* fix: handle numAsync correctly when merging ([fef8e7e](https://github.com/vkarpov15/kareem/commit/fef8e7e))
-* test: repro issue with not copying numAsync ([952d9db](https://github.com/vkarpov15/kareem/commit/952d9db))
+### Changed
 
+- _Breaking:_ drop support for Node v8 (mistake to be released as minor bump. later bumped to 9.0.0. see above.)
 
+## [8.2.0](https://github.com/motdotla/dotenv/compare/v8.1.0...v8.2.0) (2019-10-16)
 
-<a name="2.2.0"></a>
-## 2.2.0 (2018-06-05)
+### Added
 
-* chore: release 2.2.0 ([ff9ad03](https://github.com/vkarpov15/kareem/commit/ff9ad03))
-* fix: use maps instead of objects for _pres and _posts so `toString()` doesn't get reported as having ([55df303](https://github.com/vkarpov15/kareem/commit/55df303)), closes [Automattic/mongoose#6538](https://github.com/Automattic/mongoose/issues/6538)
+- TypeScript types
 
+## [8.1.0](https://github.com/motdotla/dotenv/compare/v8.0.0...v8.1.0) (2019-08-18)
 
+### Changed
 
-<a name="2.1.0"></a>
-## 2.1.0 (2018-05-16)
+- _Breaking:_ drop support for Node v6 ([#392](https://github.com/motdotla/dotenv/issues/392))
 
-* chore: release 2.1.0 ([ba5f1bc](https://github.com/vkarpov15/kareem/commit/ba5f1bc))
-* feat: add option to check wrapped function return value for promises ([c9d7dd1](https://github.com/vkarpov15/kareem/commit/c9d7dd1))
-* refactor: use const in wrap() ([0fc21f9](https://github.com/vkarpov15/kareem/commit/0fc21f9))
+# [8.0.0](https://github.com/motdotla/dotenv/compare/v7.0.0...v8.0.0) (2019-05-02)
 
+### Changed
 
+- _Breaking:_ drop support for Node v6 ([#302](https://github.com/motdotla/dotenv/issues/392))
 
-<a name="2.0.7"></a>
-## <small>2.0.7 (2018-04-28)</small>
+## [7.0.0] - 2019-03-12
 
-* chore: release 2.0.7 ([0bf91e6](https://github.com/vkarpov15/kareem/commit/0bf91e6))
-* feat: add `hasHooks()` ([225f18d](https://github.com/vkarpov15/kareem/commit/225f18d)), closes [Automattic/mongoose#6385](https://github.com/Automattic/mongoose/issues/6385)
+### Fixed
 
+- Fix removing unbalanced quotes ([#376](https://github.com/motdotla/dotenv/pull/376))
 
+### Removed
 
-<a name="2.0.6"></a>
-## <small>2.0.6 (2018-03-22)</small>
+- Removed `load` alias for `config` for consistency throughout code and documentation.
 
-* chore: release 2.0.6 ([f3d406b](https://github.com/vkarpov15/kareem/commit/f3d406b))
-* fix(wrap): ensure fast path still wraps function in `nextTick()` for chaining ([7000494](https://github.com/vkarpov15/kareem/commit/7000494)), closes [Automattic/mongoose#6250](https://github.com/Automattic/mongoose/issues/6250) [dsanel/mongoose-delete#36](https://github.com/dsanel/mongoose-delete/issues/36)
+## [6.2.0] - 2018-12-03
 
+### Added
 
+- Support preload configuration via environment variables ([#351](https://github.com/motdotla/dotenv/issues/351))
 
-<a name="2.0.5"></a>
-## <small>2.0.5 (2018-02-22)</small>
+## [6.1.0] - 2018-10-08
 
-* chore: release 2.0.5 ([3286612](https://github.com/vkarpov15/kareem/commit/3286612))
-* perf(createWrapper): don't create wrapper if there are no hooks ([5afc5b9](https://github.com/vkarpov15/kareem/commit/5afc5b9)), closes [Automattic/mongoose#6126](https://github.com/Automattic/mongoose/issues/6126)
+### Added
 
+- `debug` option for `config` and `parse` methods will turn on logging
 
+## [6.0.0] - 2018-06-02
 
-<a name="2.0.4"></a>
-## <small>2.0.4 (2018-02-08)</small>
+### Changed
 
-* chore: release 2.0.4 ([2ab0293](https://github.com/vkarpov15/kareem/commit/2ab0293))
+- _Breaking:_ drop support for Node v4 ([#304](https://github.com/motdotla/dotenv/pull/304))
 
+## [5.0.0] - 2018-01-29
 
+### Added
 
-<a name="2.0.3"></a>
-## <small>2.0.3 (2018-02-01)</small>
+- Testing against Node v8 and v9
+- Documentation on trim behavior of values
+- Documentation on how to use with `import`
 
-* chore: release 2.0.3 ([3c1abe5](https://github.com/vkarpov15/kareem/commit/3c1abe5))
-* fix: use process.nextTick() re: Automattic/mongoose#6074 ([e5bfe33](https://github.com/vkarpov15/kareem/commit/e5bfe33)), closes [Automattic/mongoose#6074](https://github.com/Automattic/mongoose/issues/6074)
+### Changed
 
+- _Breaking_: default `path` is now `path.resolve(process.cwd(), '.env')`
+- _Breaking_: does not write over keys already in `process.env` if the key has a falsy value
+- using `const` and `let` instead of `var`
 
+### Removed
 
-<a name="2.0.2"></a>
-## <small>2.0.2 (2018-01-24)</small>
+- Testing against Node v7
 
-* chore: fix license ([a9d755c](https://github.com/vkarpov15/kareem/commit/a9d755c)), closes [#10](https://github.com/vkarpov15/kareem/issues/10)
-* chore: release 2.0.2 ([fe87ab6](https://github.com/vkarpov15/kareem/commit/fe87ab6))
+## [4.0.0] - 2016-12-23
 
+### Changed
 
+- Return Object with parsed content or error instead of false ([#165](https://github.com/motdotla/dotenv/pull/165)).
 
-<a name="2.0.1"></a>
-## <small>2.0.1 (2018-01-09)</small>
+### Removed
 
-* chore: release 2.0.1 with lockfile bump ([09c44fb](https://github.com/vkarpov15/kareem/commit/09c44fb))
+- `verbose` option removed in favor of returning result.
 
+## [3.0.0] - 2016-12-20
 
+### Added
 
-<a name="2.0.0"></a>
-## 2.0.0 (2018-01-09)
+- `verbose` option will log any error messages. Off by default.
+- parses email addresses correctly
+- allow importing config method directly in ES6
 
-* chore: bump marked re: security ([cc564a9](https://github.com/vkarpov15/kareem/commit/cc564a9))
-* chore: release 2.0.0 ([f511d1c](https://github.com/vkarpov15/kareem/commit/f511d1c))
+### Changed
 
+- Suppress error messages by default ([#154](https://github.com/motdotla/dotenv/pull/154))
+- Ignoring more files for NPM to make package download smaller
 
+### Fixed
 
-<a name="2.0.0-rc5"></a>
-## 2.0.0-rc5 (2017-12-23)
+- False positive test due to case-sensitive variable ([#124](https://github.com/motdotla/dotenv/pull/124))
 
-* chore: fix build on node 4+5 ([6dac5a4](https://github.com/vkarpov15/kareem/commit/6dac5a4))
-* chore: fix built on node 4 + 5 again ([434ef0a](https://github.com/vkarpov15/kareem/commit/434ef0a))
-* chore: release 2.0.0-rc5 ([25a32ee](https://github.com/vkarpov15/kareem/commit/25a32ee))
+### Removed
 
+- `silent` option removed in favor of `verbose`
 
+## [2.0.0] - 2016-01-20
 
-<a name="2.0.0-rc4"></a>
-## 2.0.0-rc4 (2017-12-22)
+### Added
 
-* chore: release 2.0.0-rc4 ([49fc083](https://github.com/vkarpov15/kareem/commit/49fc083))
-* BREAKING CHANGE: deduplicate when merging hooks re: Automattic/mongoose#2945 ([d458573](https://github.com/vkarpov15/kareem/commit/d458573)), closes [Automattic/mongoose#2945](https://github.com/Automattic/mongoose/issues/2945)
+- CHANGELOG to ["make it easier for users and contributors to see precisely what notable changes have been made between each release"](http://keepachangelog.com/). Linked to from README
+- LICENSE to be more explicit about what was defined in `package.json`. Linked to from README
+- Testing nodejs v4 on travis-ci
+- added examples of how to use dotenv in different ways
+- return parsed object on success rather than boolean true
 
+### Changed
 
+- README has shorter description not referencing ruby gem since we don't have or want feature parity
 
-<a name="2.0.0-rc3"></a>
-## 2.0.0-rc3 (2017-12-22)
+### Removed
 
-* chore: release 2.0.0-rc3 ([adaaa00](https://github.com/vkarpov15/kareem/commit/adaaa00))
-* feat: support returning promises from middleware functions ([05b4480](https://github.com/vkarpov15/kareem/commit/05b4480)), closes [Automattic/mongoose#3779](https://github.com/Automattic/mongoose/issues/3779)
+- Variable expansion and escaping so environment variables are encouraged to be fully orthogonal
 
+## [1.2.0] - 2015-06-20
 
+### Added
 
-<a name="2.0.0-rc2"></a>
-## 2.0.0-rc2 (2017-12-21)
+- Preload hook to require dotenv without including it in your code
 
-* chore: release 2.0.0-rc2 ([76325fa](https://github.com/vkarpov15/kareem/commit/76325fa))
-* fix: ensure next() and done() run in next tick ([6c20684](https://github.com/vkarpov15/kareem/commit/6c20684))
+### Changed
 
+- clarified license to be "BSD-2-Clause" in `package.json`
 
+### Fixed
 
-<a name="2.0.0-rc1"></a>
-## 2.0.0-rc1 (2017-12-21)
+- retain spaces in string vars
 
-* chore: improve test coverage re: Automattic/mongoose#3232 ([7b45cf0](https://github.com/vkarpov15/kareem/commit/7b45cf0)), closes [Automattic/mongoose#3232](https://github.com/Automattic/mongoose/issues/3232)
-* chore: release 2.0.0-rc1 ([9b83f52](https://github.com/vkarpov15/kareem/commit/9b83f52))
-* BREAKING CHANGE: report sync exceptions as errors, only allow calling next() and done() once ([674adcc](https://github.com/vkarpov15/kareem/commit/674adcc)), closes [Automattic/mongoose#3483](https://github.com/Automattic/mongoose/issues/3483)
+## [1.1.0] - 2015-03-31
 
+### Added
 
+- Silent option to silence `console.log` when `.env` missing
 
-<a name="2.0.0-rc0"></a>
-## 2.0.0-rc0 (2017-12-17)
+## [1.0.0] - 2015-03-13
 
-* chore: release 2.0.0-rc0 ([16b44b5](https://github.com/vkarpov15/kareem/commit/16b44b5))
-* BREAKING CHANGE: drop support for node < 4 ([9cbb8c7](https://github.com/vkarpov15/kareem/commit/9cbb8c7))
-* BREAKING CHANGE: remove useLegacyPost and add several new features ([6dd8531](https://github.com/vkarpov15/kareem/commit/6dd8531)), closes [Automattic/mongoose#3232](https://github.com/Automattic/mongoose/issues/3232)
+### Removed
 
+- support for multiple `.env` files. should always use one `.env` file for the current environment
 
-
-<a name="1.5.0"></a>
-## 1.5.0 (2017-07-20)
-
-* chore: release 1.5.0 ([9c491a0](https://github.com/vkarpov15/kareem/commit/9c491a0))
-* fix: improve post error handlers results ([9928dd5](https://github.com/vkarpov15/kareem/commit/9928dd5)), closes [Automattic/mongoose#5466](https://github.com/Automattic/mongoose/issues/5466)
-
-
-
-<a name="1.4.2"></a>
-## <small>1.4.2 (2017-07-06)</small>
-
-* chore: release 1.4.2 ([8d14ac5](https://github.com/vkarpov15/kareem/commit/8d14ac5))
-* fix: correct args re: Automattic/mongoose#5405 ([3f28ae6](https://github.com/vkarpov15/kareem/commit/3f28ae6)), closes [Automattic/mongoose#5405](https://github.com/Automattic/mongoose/issues/5405)
-
-
-
-<a name="1.4.1"></a>
-## <small>1.4.1 (2017-04-25)</small>
-
-* chore: release 1.4.1 ([5ecf0c2](https://github.com/vkarpov15/kareem/commit/5ecf0c2))
-* fix: handle numAsyncPres with clone() ([c72e857](https://github.com/vkarpov15/kareem/commit/c72e857)), closes [#8](https://github.com/vkarpov15/kareem/issues/8)
-* test: repro #8 ([9b4d6b2](https://github.com/vkarpov15/kareem/commit/9b4d6b2)), closes [#8](https://github.com/vkarpov15/kareem/issues/8)
-
-
-
-<a name="1.4.0"></a>
-## 1.4.0 (2017-04-19)
-
-* chore: release 1.4.0 ([101c5f5](https://github.com/vkarpov15/kareem/commit/101c5f5))
-* feat: add merge() function ([285325e](https://github.com/vkarpov15/kareem/commit/285325e))
-
-
-
-<a name="1.3.0"></a>
-## 1.3.0 (2017-03-26)
-
-* chore: release 1.3.0 ([f3a9e50](https://github.com/vkarpov15/kareem/commit/f3a9e50))
-* feat: pass function args to execPre ([4dd466d](https://github.com/vkarpov15/kareem/commit/4dd466d))
-
-
-
-<a name="1.2.1"></a>
-## <small>1.2.1 (2017-02-03)</small>
-
-* chore: release 1.2.1 ([d97081f](https://github.com/vkarpov15/kareem/commit/d97081f))
-* fix: filter out _kareemIgnored args for error handlers re: Automattic/mongoose#4925 ([ddc7aeb](https://github.com/vkarpov15/kareem/commit/ddc7aeb)), closes [Automattic/mongoose#4925](https://github.com/Automattic/mongoose/issues/4925)
-* fix: make error handlers handle errors in pre hooks ([af38033](https://github.com/vkarpov15/kareem/commit/af38033)), closes [Automattic/mongoose#4927](https://github.com/Automattic/mongoose/issues/4927)
-
-
-
-<a name="1.2.0"></a>
-## 1.2.0 (2017-01-02)
-
-* chore: release 1.2.0 ([033225c](https://github.com/vkarpov15/kareem/commit/033225c))
-* chore: upgrade deps ([f9e9a09](https://github.com/vkarpov15/kareem/commit/f9e9a09))
-* feat: add _kareemIgnore re: Automattic/mongoose#4836 ([7957771](https://github.com/vkarpov15/kareem/commit/7957771)), closes [Automattic/mongoose#4836](https://github.com/Automattic/mongoose/issues/4836)
-
-
-
-<a name="1.1.5"></a>
-## <small>1.1.5 (2016-12-13)</small>
-
-* chore: release 1.1.5 ([1a9f684](https://github.com/vkarpov15/kareem/commit/1a9f684))
-* fix: correct field name ([04a0e9d](https://github.com/vkarpov15/kareem/commit/04a0e9d))
-
-
-
-<a name="1.1.4"></a>
-## <small>1.1.4 (2016-12-09)</small>
-
-* chore: release 1.1.4 ([ece401c](https://github.com/vkarpov15/kareem/commit/ece401c))
-* chore: run tests on node 6 ([e0cb1cb](https://github.com/vkarpov15/kareem/commit/e0cb1cb))
-* fix: only copy own properties in clone() ([dfe28ce](https://github.com/vkarpov15/kareem/commit/dfe28ce)), closes [#7](https://github.com/vkarpov15/kareem/issues/7)
-
-
-
-<a name="1.1.3"></a>
-## <small>1.1.3 (2016-06-27)</small>
-
-* chore: release 1.1.3 ([87171c8](https://github.com/vkarpov15/kareem/commit/87171c8))
-* fix: couple more issues with arg processing ([c65f523](https://github.com/vkarpov15/kareem/commit/c65f523))
-
-
-
-<a name="1.1.2"></a>
-## <small>1.1.2 (2016-06-27)</small>
-
-* chore: release 1.1.2 ([8e102b6](https://github.com/vkarpov15/kareem/commit/8e102b6))
-* fix: add early return ([4feda4e](https://github.com/vkarpov15/kareem/commit/4feda4e))
-
-
-
-<a name="1.1.1"></a>
-## <small>1.1.1 (2016-06-27)</small>
-
-* chore: release 1.1.1 ([8bb3050](https://github.com/vkarpov15/kareem/commit/8bb3050))
-* fix: skip error handlers if no error ([0eb3a44](https://github.com/vkarpov15/kareem/commit/0eb3a44))
-
-
-
-<a name="1.1.0"></a>
-## 1.1.0 (2016-05-11)
-
-* chore: release 1.1.0 ([85332d9](https://github.com/vkarpov15/kareem/commit/85332d9))
-* chore: test on node 4 and node 5 ([1faefa1](https://github.com/vkarpov15/kareem/commit/1faefa1))
-* 100% coverage again ([c9aee4e](https://github.com/vkarpov15/kareem/commit/c9aee4e))
-* add support for error post hooks ([d378113](https://github.com/vkarpov15/kareem/commit/d378113))
-* basic setup for sync hooks #4 ([55aa081](https://github.com/vkarpov15/kareem/commit/55aa081)), closes [#4](https://github.com/vkarpov15/kareem/issues/4)
-* proof of concept for error handlers ([e4a07d9](https://github.com/vkarpov15/kareem/commit/e4a07d9))
-* refactor out handleWrapError helper ([b19af38](https://github.com/vkarpov15/kareem/commit/b19af38))
-
-
-
-<a name="1.0.1"></a>
-## <small>1.0.1 (2015-05-10)</small>
-
-* Fix #1 ([de60dc6](https://github.com/vkarpov15/kareem/commit/de60dc6)), closes [#1](https://github.com/vkarpov15/kareem/issues/1)
-* release 1.0.1 ([6971088](https://github.com/vkarpov15/kareem/commit/6971088))
-* Run tests on iojs in travis ([adcd201](https://github.com/vkarpov15/kareem/commit/adcd201))
-* support legacy post hook behavior in wrap() ([23fa74c](https://github.com/vkarpov15/kareem/commit/23fa74c))
-* Use node 0.12 in travis ([834689d](https://github.com/vkarpov15/kareem/commit/834689d))
-
-
-
-<a name="1.0.0"></a>
-## 1.0.0 (2015-01-28)
-
-* Tag 1.0.0 ([4c5a35a](https://github.com/vkarpov15/kareem/commit/4c5a35a))
-
-
-
-<a name="0.0.8"></a>
-## <small>0.0.8 (2015-01-27)</small>
-
-* Add clone function ([688bba7](https://github.com/vkarpov15/kareem/commit/688bba7))
-* Add jscs for style checking ([5c93149](https://github.com/vkarpov15/kareem/commit/5c93149))
-* Bump 0.0.8 ([03c0d2f](https://github.com/vkarpov15/kareem/commit/03c0d2f))
-* Fix jscs config, add gulp rules ([9989abf](https://github.com/vkarpov15/kareem/commit/9989abf))
-* fix Makefile typo ([1f7e61a](https://github.com/vkarpov15/kareem/commit/1f7e61a))
-
-
-
-<a name="0.0.7"></a>
-## <small>0.0.7 (2015-01-04)</small>
-
-* Bump 0.0.7 ([98ef173](https://github.com/vkarpov15/kareem/commit/98ef173))
-* fix LearnBoost/mongoose#2553 - use null instead of undefined for err ([9157b48](https://github.com/vkarpov15/kareem/commit/9157b48)), closes [LearnBoost/mongoose#2553](https://github.com/LearnBoost/mongoose/issues/2553)
-* Regenerate docs ([2331cdf](https://github.com/vkarpov15/kareem/commit/2331cdf))
-
-
-
-<a name="0.0.6"></a>
-## <small>0.0.6 (2015-01-01)</small>
-
-* Update docs and bump 0.0.6 ([92c12a7](https://github.com/vkarpov15/kareem/commit/92c12a7))
-
-
-
-<a name="0.0.5"></a>
-## <small>0.0.5 (2015-01-01)</small>
-
-* Add coverage rule to Makefile ([825a91c](https://github.com/vkarpov15/kareem/commit/825a91c))
-* Add coveralls to README ([fb52369](https://github.com/vkarpov15/kareem/commit/fb52369))
-* Add coveralls to travis ([93f6f15](https://github.com/vkarpov15/kareem/commit/93f6f15))
-* Add createWrapper() function ([ea77741](https://github.com/vkarpov15/kareem/commit/ea77741))
-* Add istanbul code coverage ([6eceeef](https://github.com/vkarpov15/kareem/commit/6eceeef))
-* Add some more comments for examples ([c5b0c6f](https://github.com/vkarpov15/kareem/commit/c5b0c6f))
-* Add travis ([e6dcb06](https://github.com/vkarpov15/kareem/commit/e6dcb06))
-* Add travis badge to docs ([ad8c9b3](https://github.com/vkarpov15/kareem/commit/ad8c9b3))
-* Add wrap() tests, 100% coverage ([6945be4](https://github.com/vkarpov15/kareem/commit/6945be4))
-* Better test coverage for execPost ([d9ad539](https://github.com/vkarpov15/kareem/commit/d9ad539))
-* Bump 0.0.5 ([69875b1](https://github.com/vkarpov15/kareem/commit/69875b1))
-* Docs fix ([15b7098](https://github.com/vkarpov15/kareem/commit/15b7098))
-* Fix silly mistake in docs generation ([50373eb](https://github.com/vkarpov15/kareem/commit/50373eb))
-* Fix typo in readme ([fec4925](https://github.com/vkarpov15/kareem/commit/fec4925))
-* Linkify travis badge ([92b25fe](https://github.com/vkarpov15/kareem/commit/92b25fe))
-* Make travis run coverage ([747157b](https://github.com/vkarpov15/kareem/commit/747157b))
-* Move travis status badge ([d52e89b](https://github.com/vkarpov15/kareem/commit/d52e89b))
-* Quick fix for coverage ([50bbddb](https://github.com/vkarpov15/kareem/commit/50bbddb))
-* Typo fix ([adea794](https://github.com/vkarpov15/kareem/commit/adea794))
-
-
-
-<a name="0.0.4"></a>
-## <small>0.0.4 (2014-12-13)</small>
-
-* Bump 0.0.4, run docs generation ([51a15fe](https://github.com/vkarpov15/kareem/commit/51a15fe))
-* Use correct post parameters in wrap() ([9bb5da3](https://github.com/vkarpov15/kareem/commit/9bb5da3))
-
-
-
-<a name="0.0.3"></a>
-## <small>0.0.3 (2014-12-12)</small>
-
-* Add npm test script, fix small bug with args not getting passed through post ([49e3e68](https://github.com/vkarpov15/kareem/commit/49e3e68))
-* Bump 0.0.3 ([65621d8](https://github.com/vkarpov15/kareem/commit/65621d8))
-* Update readme ([901388b](https://github.com/vkarpov15/kareem/commit/901388b))
-
-
-
-<a name="0.0.2"></a>
-## <small>0.0.2 (2014-12-12)</small>
-
-* Add github repo and bump 0.0.2 ([59db8be](https://github.com/vkarpov15/kareem/commit/59db8be))
-
-
-
-<a name="0.0.1"></a>
-## <small>0.0.1 (2014-12-12)</small>
-
-* Add basic docs ([ad29ea4](https://github.com/vkarpov15/kareem/commit/ad29ea4))
-* Add pre hooks ([2ffc356](https://github.com/vkarpov15/kareem/commit/2ffc356))
-* Add wrap function ([68c540c](https://github.com/vkarpov15/kareem/commit/68c540c))
-* Bump to version 0.0.1 ([a4bfd68](https://github.com/vkarpov15/kareem/commit/a4bfd68))
-* Initial commit ([4002458](https://github.com/vkarpov15/kareem/commit/4002458))
-* Initial deposit ([98fc489](https://github.com/vkarpov15/kareem/commit/98fc489))
-* Post hooks ([395b67c](https://github.com/vkarpov15/kareem/commit/395b67c))
-* Some basic setup work ([82df75e](https://github.com/vkarpov15/kareem/commit/82df75e))
-* Support sync pre hooks ([1cc1b9f](https://github.com/vkarpov15/kareem/commit/1cc1b9f))
-* Update package.json description ([978da18](https://github.com/vkarpov15/kareem/commit/978da18))
+[7.0.0]: https://github.com/motdotla/dotenv/compare/v6.2.0...v7.0.0
+[6.2.0]: https://github.com/motdotla/dotenv/compare/v6.1.0...v6.2.0
+[6.1.0]: https://github.com/motdotla/dotenv/compare/v6.0.0...v6.1.0
+[6.0.0]: https://github.com/motdotla/dotenv/compare/v5.0.0...v6.0.0
+[5.0.0]: https://github.com/motdotla/dotenv/compare/v4.0.0...v5.0.0
+[4.0.0]: https://github.com/motdotla/dotenv/compare/v3.0.0...v4.0.0
+[3.0.0]: https://github.com/motdotla/dotenv/compare/v2.0.0...v3.0.0
+[2.0.0]: https://github.com/motdotla/dotenv/compare/v1.2.0...v2.0.0
+[1.2.0]: https://github.com/motdotla/dotenv/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/motdotla/dotenv/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/motdotla/dotenv/compare/v0.4.0...v1.0.0
