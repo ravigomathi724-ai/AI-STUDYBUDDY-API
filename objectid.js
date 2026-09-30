@@ -1,29 +1,41 @@
+/**
+ * ObjectId type constructor
+ *
+ * #### Example:
+ *
+ *     const id = new mongoose.Types.ObjectId;
+ *
+ * @constructor ObjectId
+ */
+
 'use strict';
 
-const isBsonType = require('../helpers/isBsonType');
-const ObjectId = require('../types/objectid');
+const ObjectId = require('mongodb/lib/bson').ObjectId;
+const objectIdSymbol = require('../helpers/symbols').objectIdSymbol;
 
-module.exports = function castObjectId(value) {
-  if (value == null) {
-    return value;
+/**
+ * Getter for convenience with populate, see gh-6115
+ * @api private
+ */
+
+Object.defineProperty(ObjectId.prototype, '_id', {
+  enumerable: false,
+  configurable: true,
+  get: function() {
+    return this;
   }
+});
 
-  if (isBsonType(value, 'ObjectId')) {
-    return value;
-  }
+/*!
+ * Convenience `valueOf()` to allow comparing ObjectIds using double equals re: gh-7299
+ */
 
-  if (value._id) {
-    if (isBsonType(value._id, 'ObjectId')) {
-      return value._id;
-    }
-    if (value._id.toString instanceof Function) {
-      return new ObjectId(value._id.toString());
-    }
-  }
+if (!Object.hasOwn(ObjectId.prototype, 'valueOf')) {
+  ObjectId.prototype.valueOf = function objectIdValueOf() {
+    return this.toString();
+  };
+}
 
-  if (value.toString instanceof Function) {
-    return new ObjectId(value.toString());
-  }
+ObjectId.prototype[objectIdSymbol] = true;
 
-  return new ObjectId(value);
-};
+module.exports = ObjectId;
