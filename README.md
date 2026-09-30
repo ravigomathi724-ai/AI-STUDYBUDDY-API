@@ -1,95 +1,140 @@
-Description
-===========
+# accepts
 
-streamsearch is a module for [node.js](http://nodejs.org/) that allows searching a stream using the Boyer-Moore-Horspool algorithm.
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][npm-url]
+[![Node.js Version][node-version-image]][node-version-url]
+[![Build Status][github-actions-ci-image]][github-actions-ci-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
 
-This module is based heavily on the Streaming Boyer-Moore-Horspool C++ implementation by Hongli Lai [here](https://github.com/FooBarWidget/boyer-moore-horspool).
+Higher level content negotiation based on [negotiator](https://www.npmjs.com/package/negotiator).
+Extracted from [koa](https://www.npmjs.com/package/koa) for general use.
 
+In addition to negotiator, it allows:
 
-Requirements
-============
+- Allows types as an array or arguments list, ie `(['text/html', 'application/json'])`
+  as well as `('text/html', 'application/json')`.
+- Allows type shorthands such as `json`.
+- Returns `false` when no types match
+- Treats non-existent headers as `*`
 
-* [node.js](http://nodejs.org/) -- v10.0.0 or newer
+## Installation
 
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
 
-Installation
-============
-
-    npm install streamsearch
-
-Example
-=======
-
-```js
-  const { inspect } = require('util');
-
-  const StreamSearch = require('streamsearch');
-
-  const needle = Buffer.from('\r\n');
-  const ss = new StreamSearch(needle, (isMatch, data, start, end) => {
-    if (data)
-      console.log('data: ' + inspect(data.toString('latin1', start, end)));
-    if (isMatch)
-      console.log('match!');
-  });
-
-  const chunks = [
-    'foo',
-    ' bar',
-    '\r',
-    '\n',
-    'baz, hello\r',
-    '\n world.',
-    '\r\n Node.JS rules!!\r\n\r\n',
-  ];
-  for (const chunk of chunks)
-    ss.push(Buffer.from(chunk));
-
-  // output:
-  //
-  // data: 'foo'
-  // data: ' bar'
-  // match!
-  // data: 'baz, hello'
-  // match!
-  // data: ' world.'
-  // match!
-  // data: ' Node.JS rules!!'
-  // match!
-  // data: ''
-  // match!
+```sh
+$ npm install accepts
 ```
 
+## API
 
-API
-===
+```js
+var accepts = require('accepts')
+```
 
-Properties
-----------
+### accepts(req)
 
-* **maxMatches** - < _integer_ > - The maximum number of matches. Defaults to `Infinity`.
+Create a new `Accepts` object for the given `req`.
 
-* **matches** - < _integer_ > - The current match count.
+#### .charset(charsets)
 
+Return the first accepted charset. If nothing in `charsets` is accepted,
+then `false` is returned.
 
-Functions
----------
+#### .charsets()
 
-* **(constructor)**(< _mixed_ >needle, < _function_ >callback) - Creates and returns a new instance for searching for a _Buffer_ or _string_ `needle`. `callback` is called any time there is non-matching data and/or there is a needle match. `callback` will be called with the following arguments:
+Return the charsets that the request accepts, in the order of the client's
+preference (most preferred first).
 
-  1. `isMatch` - _boolean_ - Indicates whether a match has been found
+#### .encoding(encodings)
 
-  2. `data` - _mixed_ - If set, this contains data that did not match the needle.
+Return the first accepted encoding. If nothing in `encodings` is accepted,
+then `false` is returned.
 
-  3. `start` - _integer_ - The index in `data` where the non-matching data begins (inclusive).
+#### .encodings()
 
-  4. `end` - _integer_ - The index in `data` where the non-matching data ends (exclusive).
+Return the encodings that the request accepts, in the order of the client's
+preference (most preferred first).
 
-  5. `isSafeData` - _boolean_ - Indicates if it is safe to store a reference to `data` (e.g. as-is or via `data.slice()`) or not, as in some cases `data` may point to a Buffer whose contents change over time.
+#### .language(languages)
 
-* **destroy**() - _(void)_ - Emits any last remaining unmatched data that may still be buffered and then resets internal state.
+Return the first accepted language. If nothing in `languages` is accepted,
+then `false` is returned.
 
-* **push**(< _Buffer_ >chunk) - _integer_ - Processes `chunk`, searching for a match. The return value is the last processed index in `chunk` + 1.
+#### .languages()
 
-* **reset**() - _(void)_ - Resets internal state. Useful for when you wish to start searching a new/different stream for example.
+Return the languages that the request accepts, in the order of the client's
+preference (most preferred first).
 
+#### .type(types)
+
+Return the first accepted type (and it is returned as the same text as what
+appears in the `types` array). If nothing in `types` is accepted, then `false`
+is returned.
+
+The `types` array can contain full MIME types or file extensions. Any value
+that is not a full MIME types is passed to `require('mime-types').lookup`.
+
+#### .types()
+
+Return the types that the request accepts, in the order of the client's
+preference (most preferred first).
+
+## Examples
+
+### Simple type negotiation
+
+This simple example shows how to use `accepts` to return a different typed
+respond body based on what the client wants to accept. The server lists it's
+preferences in order and will get back the best match between the client and
+server.
+
+```js
+var accepts = require('accepts')
+var http = require('http')
+
+function app (req, res) {
+  var accept = accepts(req)
+
+  // the order of this list is significant; should be server preferred order
+  switch (accept.type(['json', 'html'])) {
+    case 'json':
+      res.setHeader('Content-Type', 'application/json')
+      res.write('{"hello":"world!"}')
+      break
+    case 'html':
+      res.setHeader('Content-Type', 'text/html')
+      res.write('<b>hello, world!</b>')
+      break
+    default:
+      // the fallback is text/plain, so no need to specify it above
+      res.setHeader('Content-Type', 'text/plain')
+      res.write('hello, world!')
+      break
+  }
+
+  res.end()
+}
+
+http.createServer(app).listen(3000)
+```
+
+You can test this out with the cURL program:
+```sh
+curl -I -H'Accept: text/html' http://localhost:3000/
+```
+
+## License
+
+[MIT](LICENSE)
+
+[coveralls-image]: https://badgen.net/coveralls/c/github/jshttp/accepts/master
+[coveralls-url]: https://coveralls.io/r/jshttp/accepts?branch=master
+[github-actions-ci-image]: https://badgen.net/github/checks/jshttp/accepts/master?label=ci
+[github-actions-ci-url]: https://github.com/jshttp/accepts/actions/workflows/ci.yml
+[node-version-image]: https://badgen.net/npm/node/accepts
+[node-version-url]: https://nodejs.org/en/download
+[npm-downloads-image]: https://badgen.net/npm/dm/accepts
+[npm-url]: https://npmjs.org/package/accepts
+[npm-version-image]: https://badgen.net/npm/v/accepts
