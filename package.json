@@ -1,35 +1,58 @@
 {
-  "name": "mquery",
-  "version": "6.0.0",
-  "description": "Expressive query building for MongoDB",
-  "main": "lib/mquery.js",
-  "scripts": {
-    "test": "mocha --exit test/index.js test/*.test.js",
-    "fix-lint": "eslint . --fix",
-    "lint": "eslint ."
+  "name": "multer",
+  "description": "Middleware for handling `multipart/form-data`.",
+  "version": "2.2.0",
+  "contributors": [
+    "Hage Yaapa <captain@hacksparrow.com> (http://www.hacksparrow.com)",
+    "Jaret Pfluger <https://github.com/jpfluger>",
+    "Linus Unnebäck <linus@folkdatorn.se>"
+  ],
+  "license": "MIT",
+  "repository": "expressjs/multer",
+  "funding": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/express"
   },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/aheckmann/mquery.git"
-  },
-  "engines": {
-    "node": ">=20.19.0"
+  "keywords": [
+    "form",
+    "post",
+    "multipart",
+    "form-data",
+    "formdata",
+    "express",
+    "middleware"
+  ],
+  "dependencies": {
+    "append-field": "^1.0.0",
+    "busboy": "^1.6.0",
+    "concat-stream": "^2.0.0",
+    "type-is": "^1.6.18"
   },
   "devDependencies": {
-    "eslint": "8.x",
-    "eslint-plugin-mocha-no-only": "1.1.1",
-    "mocha": "11.x",
-    "mongodb": "6.x"
+    "deep-equal": "^2.0.3",
+    "express": "^4.21.2",
+    "form-data": "^4.0.2",
+    "fs-temp": "^1.2.1",
+    "mocha": "^11.5.0",
+    "nyc": "^15.1.0",
+    "rimraf": "^2.4.1",
+    "standard": "^14.3.3",
+    "testdata-w3c-json-form": "^1.0.0"
   },
-  "bugs": {
-    "url": "https://github.com/aheckmann/mquery/issues/new"
+  "engines": {
+    "node": ">= 10.16.0"
   },
-  "author": "Aaron Heckmann <aaron.heckmann+github@gmail.com>",
-  "license": "MIT",
-  "keywords": [
-    "mongodb",
-    "query",
-    "builder"
+  "files": [
+    "LICENSE",
+    "index.js",
+    "storage/",
+    "lib/"
   ],
-  "homepage": "https://github.com/aheckmann/mquery/"
+  "scripts": {
+    "lint": "standard",
+    "lint:fix": "standard --fix",
+    "test": "mocha --reporter spec --exit --check-leaks test/",
+    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
+    "test-cov": "nyc --reporter=html --reporter=text npm test"
+  }
 }
