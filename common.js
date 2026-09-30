@@ -1,127 +1,109 @@
 'use strict';
 
-/*!
- * Module dependencies.
- */
+const assert = require('assert');
+const { inspect } = require('util');
 
-const Binary = require('mongodb/lib/bson').Binary;
-const isBsonType = require('./isBsonType');
-const isMongooseObject = require('./isMongooseObject');
-const MongooseError = require('../error');
-const util = require('util');
+const mustCallChecks = [];
 
-exports.flatten = flatten;
-exports.modifiedPaths = modifiedPaths;
+function noop() {}
 
-/*!
- * ignore
- */
+function runCallChecks(exitCode) {
+  if (exitCode !== 0) return;
 
-function flatten(update, path, options, schema) {
-  let keys;
-  if (update && isMongooseObject(update) && !Buffer.isBuffer(update)) {
-    keys = Object.keys(update.toObject({ transform: false, virtuals: false }) || {});
-  } else {
-    keys = Object.keys(update || {});
-  }
-
-  const numKeys = keys.length;
-  const result = {};
-  path = path ? path + '.' : '';
-
-  for (let i = 0; i < numKeys; ++i) {
-    const key = keys[i];
-    const val = update[key];
-    result[path + key] = val;
-
-    // Avoid going into mixed paths if schema is specified
-    const keySchema = schema?.path?.(path + key);
-    const isNested = schema?.nested?.[path + key];
-    if (keySchema?.instance === 'Mixed') continue;
-
-    if (shouldFlatten(val)) {
-      if (options?.skipArrays && Array.isArray(val)) {
-        continue;
-      }
-      const flat = flatten(val, path + key, options, schema);
-      for (const k in flat) {
-        result[k] = flat[k];
-      }
-      if (Array.isArray(val)) {
-        result[path + key] = val;
-      }
+  const failed = mustCallChecks.filter((context) => {
+    if ('minimum' in context) {
+      context.messageSegment = `at least ${context.minimum}`;
+      return context.actual < context.minimum;
     }
+    context.messageSegment = `exactly ${context.exact}`;
+    return context.actual !== context.exact;
+  });
 
-    if (isNested) {
-      const paths = Object.keys(schema.paths);
-      for (const p of paths) {
-        if (p.startsWith(path + key + '.') && !Object.hasOwn(result, p)) {
-          result[p] = void 0;
-        }
-      }
-    }
-  }
+  failed.forEach((context) => {
+    console.error('Mismatched %s function calls. Expected %s, actual %d.',
+                  context.name,
+                  context.messageSegment,
+                  context.actual);
+    console.error(context.stack.split('\n').slice(2).join('\n'));
+  });
 
-  return result;
+  if (failed.length)
+    process.exit(1);
 }
 
-/*!
- * ignore
- */
-
-function modifiedPaths(update, path, result, recursion = null) {
-  if (update == null || typeof update !== 'object') {
-    return;
-  }
-
-  if (recursion == null) {
-    recursion = {
-      raw: { update, path },
-      trace: new WeakSet()
-    };
-  }
-
-  if (recursion.trace.has(update)) {
-    throw new MongooseError(`a circular reference in the update value, updateValue:
-${util.inspect(recursion.raw.update, { showHidden: false, depth: 1 })}
-updatePath: '${recursion.raw.path}'`);
-  }
-  recursion.trace.add(update);
-
-  const keys = Object.keys(update || {});
-  const numKeys = keys.length;
-  result = result || {};
-  path = path ? path + '.' : '';
-
-  for (let i = 0; i < numKeys; ++i) {
-    const key = keys[i];
-    let val = update[key];
-
-    const _path = path + key;
-    result[_path] = true;
-    if (!Buffer.isBuffer(val) && isMongooseObject(val)) {
-      val = val.toObject({ transform: false, virtuals: false });
-    }
-    if (shouldFlatten(val)) {
-      modifiedPaths(val, path + key, result, recursion);
-    }
-  }
-  recursion.trace.delete(update);
-
-  return result;
+function mustCall(fn, exact) {
+  return _mustCallInner(fn, exact, 'exact');
 }
 
-/*!
- * ignore
- */
-
-function shouldFlatten(val) {
-  return val &&
-      typeof val === 'object' &&
-      !(val instanceof Date) &&
-      !isBsonType(val, 'ObjectId') &&
-      (!Array.isArray(val) || val.length !== 0) &&
-      !(val instanceof Buffer) &&
-      !isBsonType(val, 'Decimal128') &&
-      !(val instanceof Binary);
+function mustCallAtLeast(fn, minimum) {
+  return _mustCallInner(fn, minimum, 'minimum');
 }
+
+function _mustCallInner(fn, criteria = 1, field) {
+  if (process._exiting)
+    throw new Error('Cannot use common.mustCall*() in process exit handler');
+
+  if (typeof fn === 'number') {
+    criteria = fn;
+    fn = noop;
+  } else if (fn === undefined) {
+    fn = noop;
+  }
+
+  if (typeof criteria !== 'number')
+    throw new TypeError(`Invalid ${field} value: ${criteria}`);
+
+  const context = {
+    [field]: criteria,
+    actual: 0,
+    stack: inspect(new Error()),
+    name: fn.name || '<anonymous>'
+  };
+
+  // Add the exit listener only once to avoid listener leak warnings
+  if (mustCallChecks.length === 0)
+    process.on('exit', runCallChecks);
+
+  mustCallChecks.push(context);
+
+  function wrapped(...args) {
+    ++context.actual;
+    return fn.call(this, ...args);
+  }
+  // TODO: remove origFn?
+  wrapped.origFn = fn;
+
+  return wrapped;
+}
+
+function getCallSite(top) {
+  const originalStackFormatter = Error.prepareStackTrace;
+  Error.prepareStackTrace = (err, stack) =>
+    `${stack[0].getFileName()}:${stack[0].getLineNumber()}`;
+  const err = new Error();
+  Error.captureStackTrace(err, top);
+  // With the V8 Error API, the stack is not formatted until it is accessed
+  // eslint-disable-next-line no-unused-expressions
+  err.stack;
+  Error.prepareStackTrace = originalStackFormatter;
+  return err.stack;
+}
+
+function mustNotCall(msg) {
+  const callSite = getCallSite(mustNotCall);
+  return function mustNotCall(...args) {
+    args = args.map(inspect).join(', ');
+    const argsInfo = (args.length > 0
+                      ? `\ncalled with arguments: ${args}`
+                      : '');
+    assert.fail(
+      `${msg || 'function should not have been called'} at ${callSite}`
+        + argsInfo);
+  };
+}
+
+module.exports = {
+  mustCall,
+  mustCallAtLeast,
+  mustNotCall,
+};
