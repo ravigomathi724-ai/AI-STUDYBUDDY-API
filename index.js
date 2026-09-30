@@ -1,47 +1,13 @@
-const Layer = require('express/lib/router/layer');
-const Router = require('express/lib/router');
+'use strict';
 
-const last = (arr = []) => arr[arr.length - 1];
-const noop = Function.prototype;
+const env = require('../env');
 
-function copyFnProps(oldFn, newFn) {
-  Object.keys(oldFn).forEach((key) => {
-    newFn[key] = oldFn[key];
-  });
-  return newFn;
+if ('unknown' == env.type) {
+  throw new Error('Unknown environment');
 }
 
-function wrap(fn) {
-  const newFn = function newFn(...args) {
-    const ret = fn.apply(this, args);
-    const next = (args.length === 5 ? args[2] : last(args)) || noop;
-    if (ret && ret.catch) ret.catch(err => next(err));
-    return ret;
-  };
-  Object.defineProperty(newFn, 'length', {
-    value: fn.length,
-    writable: false,
-  });
-  return copyFnProps(fn, newFn);
-}
+module.exports =
+  env.isNode ? require('./node') :
+    env.isMongo ? require('./collection') :
+      require('./collection');
 
-function patchRouterParam() {
-  const originalParam = Router.prototype.constructor.param;
-  Router.prototype.constructor.param = function param(name, fn) {
-    fn = wrap(fn);
-    return originalParam.call(this, name, fn);
-  };
-}
-
-Object.defineProperty(Layer.prototype, 'handle', {
-  enumerable: true,
-  get() {
-    return this.__handle;
-  },
-  set(fn) {
-    fn = wrap(fn);
-    this.__handle = fn;
-  },
-});
-
-patchRouterParam();

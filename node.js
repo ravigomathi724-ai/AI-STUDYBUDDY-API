@@ -1,15 +1,128 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-const index_1 = __importDefault(require("./index"));
-const memory_code_points_1 = require("./memory-code-points");
-const code_points_data_1 = __importDefault(require("./code-points-data"));
-const codePoints = (0, memory_code_points_1.createMemoryCodePoints)(code_points_data_1.default);
-function saslprep(input, opts) {
-    return (0, index_1.default)(codePoints, input, opts);
+'use strict';
+
+/**
+ * Module dependencies
+ */
+
+const Collection = require('./collection');
+
+class NodeCollection extends Collection {
+  constructor(col) {
+    super();
+
+    this.collection = col;
+    this.collectionName = col.collectionName;
+  }
+
+  /**
+   * find(match, options)
+   */
+  async find(match, options) {
+    const cursor = this.collection.find(match, options);
+
+    return cursor.toArray();
+  }
+
+  /**
+   * findOne(match, options)
+   */
+  async findOne(match, options) {
+    return this.collection.findOne(match, options);
+  }
+
+  /**
+   * countDocuments(match, options)
+   */
+  async countDocuments(match, options) {
+    return this.collection.countDocuments(match, options);
+  }
+
+  /**
+   * estimatedDocumentCount(match, options)
+   */
+  async estimatedDocumentCount(match, options) {
+    return this.collection.estimatedDocumentCount(match, options);
+  }
+
+  /**
+   * distinct(prop, match, options)
+   */
+  async distinct(prop, match, options) {
+    return this.collection.distinct(prop, match, options);
+  }
+
+  /**
+   * updateMany(match, update, options)
+   */
+  async updateMany(match, update, options) {
+    return this.collection.updateMany(match, update, options);
+  }
+
+  /**
+   * updateOne(match, update, options)
+   */
+  async updateOne(match, update, options) {
+    return this.collection.updateOne(match, update, options);
+  }
+
+  /**
+   * replaceOne(match, update, options)
+   */
+  async replaceOne(match, update, options) {
+    return this.collection.replaceOne(match, update, options);
+  }
+
+  /**
+   * deleteOne(match, options)
+   */
+  async deleteOne(match, options) {
+    return this.collection.deleteOne(match, options);
+  }
+
+  /**
+   * deleteMany(match, options)
+   */
+  async deleteMany(match, options) {
+    return this.collection.deleteMany(match, options);
+  }
+
+  /**
+   * findOneAndDelete(match, options, function(err[, result])
+   */
+  async findOneAndDelete(match, options) {
+    return this.collection.findOneAndDelete(match, options);
+  }
+
+  /**
+   * findOneAndUpdate(match, update, options)
+   */
+  async findOneAndUpdate(match, update, options) {
+    return this.collection.findOneAndUpdate(match, update, options);
+  }
+
+  /**
+   * findOneAndReplace(match, update, options)
+   */
+  async findOneAndReplace(match, update, options) {
+    return this.collection.findOneAndReplace(match, update, options);
+  }
+
+  /**
+   * var cursor = findCursor(match, options)
+   */
+  findCursor(match, options) {
+    return this.collection.find(match, options);
+  }
+
+  /**
+   * aggregation(operators...)
+   * TODO
+   */
 }
-saslprep.saslprep = saslprep;
-saslprep.default = saslprep;
-module.exports = saslprep;
-//# sourceMappingURL=node.js.map
+
+
+/**
+ * Expose
+ */
+
+module.exports = exports = NodeCollection;

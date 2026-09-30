@@ -1,596 +1,297 @@
 'use strict';
 
-function parseContentType(str) {
-  if (str.length === 0)
-    return;
+/*!
+ * Module dependencies.
+ */
 
-  const params = Object.create(null);
-  let i = 0;
+const specialProperties = ['__proto__', 'constructor', 'prototype'];
 
-  // Parse type
-  for (; i < str.length; ++i) {
-    const code = str.charCodeAt(i);
-    if (TOKEN[code] !== 1) {
-      if (code !== 47/* '/' */ || i === 0)
-        return;
-      break;
-    }
-  }
-  // Check for type without subtype
-  if (i === str.length)
-    return;
+/**
+ * Clones objects
+ *
+ * @param {Object} obj the object to clone
+ * @param {Object} options
+ * @return {Object} the cloned object
+ * @api private
+ */
 
-  const type = str.slice(0, i).toLowerCase();
+const clone = exports.clone = function clone(obj, options) {
+  if (obj === undefined || obj === null)
+    return obj;
 
-  // Parse subtype
-  const subtypeStart = ++i;
-  for (; i < str.length; ++i) {
-    const code = str.charCodeAt(i);
-    if (TOKEN[code] !== 1) {
-      // Make sure we have a subtype
-      if (i === subtypeStart)
-        return;
+  if (Array.isArray(obj))
+    return exports.cloneArray(obj, options);
 
-      if (parseContentTypeParams(str, i, params) === undefined)
-        return;
-      break;
-    }
-  }
-  // Make sure we have a subtype
-  if (i === subtypeStart)
-    return;
-
-  const subtype = str.slice(subtypeStart, i).toLowerCase();
-
-  return { type, subtype, params };
-}
-
-function parseContentTypeParams(str, i, params) {
-  while (i < str.length) {
-    // Consume whitespace
-    for (; i < str.length; ++i) {
-      const code = str.charCodeAt(i);
-      if (code !== 32/* ' ' */ && code !== 9/* '\t' */)
-        break;
+  if (obj.constructor) {
+    if (/ObjectI[dD]$/.test(obj.constructor.name)) {
+      return 'function' == typeof obj.clone
+        ? obj.clone()
+        : new obj.constructor(obj.id);
     }
 
-    // Ended on whitespace
-    if (i === str.length)
-      break;
-
-    // Check for malformed parameter
-    if (str.charCodeAt(i++) !== 59/* ';' */)
-      return;
-
-    // Consume whitespace
-    for (; i < str.length; ++i) {
-      const code = str.charCodeAt(i);
-      if (code !== 32/* ' ' */ && code !== 9/* '\t' */)
-        break;
+    if (obj.constructor.name === 'ReadPreference') {
+      return new obj.constructor(obj.mode, clone(obj.tags, options));
     }
 
-    // Ended on whitespace (malformed)
-    if (i === str.length)
-      return;
-
-    let name;
-    const nameStart = i;
-    // Parse parameter name
-    for (; i < str.length; ++i) {
-      const code = str.charCodeAt(i);
-      if (TOKEN[code] !== 1) {
-        if (code !== 61/* '=' */)
-          return;
-        break;
-      }
+    if ('Binary' == obj._bsontype && obj.buffer && obj.value) {
+      return 'function' == typeof obj.clone
+        ? obj.clone()
+        : new obj.constructor(obj.value(true), obj.sub_type);
     }
 
-    // No value (malformed)
-    if (i === str.length)
-      return;
+    if ('Date' === obj.constructor.name || 'Function' === obj.constructor.name)
+      return new obj.constructor(+obj);
 
-    name = str.slice(nameStart, i);
-    ++i; // Skip over '='
+    if ('RegExp' === obj.constructor.name)
+      return new RegExp(obj);
 
-    // No value (malformed)
-    if (i === str.length)
-      return;
-
-    let value = '';
-    let valueStart;
-    if (str.charCodeAt(i) === 34/* '"' */) {
-      valueStart = ++i;
-      let escaping = false;
-      // Parse quoted value
-      for (; i < str.length; ++i) {
-        const code = str.charCodeAt(i);
-        if (code === 92/* '\\' */) {
-          if (escaping) {
-            valueStart = i;
-            escaping = false;
-          } else {
-            value += str.slice(valueStart, i);
-            escaping = true;
-          }
-          continue;
-        }
-        if (code === 34/* '"' */) {
-          if (escaping) {
-            valueStart = i;
-            escaping = false;
-            continue;
-          }
-          value += str.slice(valueStart, i);
-          break;
-        }
-        if (escaping) {
-          valueStart = i - 1;
-          escaping = false;
-        }
-        // Invalid unescaped quoted character (malformed)
-        if (QDTEXT[code] !== 1)
-          return;
-      }
-
-      // No end quote (malformed)
-      if (i === str.length)
-        return;
-
-      ++i; // Skip over double quote
-    } else {
-      valueStart = i;
-      // Parse unquoted value
-      for (; i < str.length; ++i) {
-        const code = str.charCodeAt(i);
-        if (TOKEN[code] !== 1) {
-          // No value (malformed)
-          if (i === valueStart)
-            return;
-          break;
-        }
-      }
-      value = str.slice(valueStart, i);
-    }
-
-    name = name.toLowerCase();
-    if (params[name] === undefined)
-      params[name] = value;
+    if ('Buffer' === obj.constructor.name)
+      return Buffer.from(obj);
   }
 
-  return params;
-}
+  if (isObject(obj))
+    return exports.cloneObject(obj, options);
 
-function parseDisposition(str, defDecoder) {
-  if (str.length === 0)
-    return;
-
-  const params = Object.create(null);
-  let i = 0;
-
-  for (; i < str.length; ++i) {
-    const code = str.charCodeAt(i);
-    if (TOKEN[code] !== 1) {
-      if (parseDispositionParams(str, i, params, defDecoder) === undefined)
-        return;
-      break;
-    }
-  }
-
-  const type = str.slice(0, i).toLowerCase();
-
-  return { type, params };
-}
-
-function parseDispositionParams(str, i, params, defDecoder) {
-  while (i < str.length) {
-    // Consume whitespace
-    for (; i < str.length; ++i) {
-      const code = str.charCodeAt(i);
-      if (code !== 32/* ' ' */ && code !== 9/* '\t' */)
-        break;
-    }
-
-    // Ended on whitespace
-    if (i === str.length)
-      break;
-
-    // Check for malformed parameter
-    if (str.charCodeAt(i++) !== 59/* ';' */)
-      return;
-
-    // Consume whitespace
-    for (; i < str.length; ++i) {
-      const code = str.charCodeAt(i);
-      if (code !== 32/* ' ' */ && code !== 9/* '\t' */)
-        break;
-    }
-
-    // Ended on whitespace (malformed)
-    if (i === str.length)
-      return;
-
-    let name;
-    const nameStart = i;
-    // Parse parameter name
-    for (; i < str.length; ++i) {
-      const code = str.charCodeAt(i);
-      if (TOKEN[code] !== 1) {
-        if (code === 61/* '=' */)
-          break;
-        return;
-      }
-    }
-
-    // No value (malformed)
-    if (i === str.length)
-      return;
-
-    let value = '';
-    let valueStart;
-    let charset;
-    //~ let lang;
-    name = str.slice(nameStart, i);
-    if (name.charCodeAt(name.length - 1) === 42/* '*' */) {
-      // Extended value
-
-      const charsetStart = ++i;
-      // Parse charset name
-      for (; i < str.length; ++i) {
-        const code = str.charCodeAt(i);
-        if (CHARSET[code] !== 1) {
-          if (code !== 39/* '\'' */)
-            return;
-          break;
-        }
-      }
-
-      // Incomplete charset (malformed)
-      if (i === str.length)
-        return;
-
-      charset = str.slice(charsetStart, i);
-      ++i; // Skip over the '\''
-
-      //~ const langStart = ++i;
-      // Parse language name
-      for (; i < str.length; ++i) {
-        const code = str.charCodeAt(i);
-        if (code === 39/* '\'' */)
-          break;
-      }
-
-      // Incomplete language (malformed)
-      if (i === str.length)
-        return;
-
-      //~ lang = str.slice(langStart, i);
-      ++i; // Skip over the '\''
-
-      // No value (malformed)
-      if (i === str.length)
-        return;
-
-      valueStart = i;
-
-      let encode = 0;
-      // Parse value
-      for (; i < str.length; ++i) {
-        const code = str.charCodeAt(i);
-        if (EXTENDED_VALUE[code] !== 1) {
-          if (code === 37/* '%' */) {
-            let hexUpper;
-            let hexLower;
-            if (i + 2 < str.length
-                && (hexUpper = HEX_VALUES[str.charCodeAt(i + 1)]) !== -1
-                && (hexLower = HEX_VALUES[str.charCodeAt(i + 2)]) !== -1) {
-              const byteVal = (hexUpper << 4) + hexLower;
-              value += str.slice(valueStart, i);
-              value += String.fromCharCode(byteVal);
-              i += 2;
-              valueStart = i + 1;
-              if (byteVal >= 128)
-                encode = 2;
-              else if (encode === 0)
-                encode = 1;
-              continue;
-            }
-            // '%' disallowed in non-percent encoded contexts (malformed)
-            return;
-          }
-          break;
-        }
-      }
-
-      value += str.slice(valueStart, i);
-      value = convertToUTF8(value, charset, encode);
-      if (value === undefined)
-        return;
-    } else {
-      // Non-extended value
-
-      ++i; // Skip over '='
-
-      // No value (malformed)
-      if (i === str.length)
-        return;
-
-      if (str.charCodeAt(i) === 34/* '"' */) {
-        valueStart = ++i;
-        let escaping = false;
-        // Parse quoted value
-        for (; i < str.length; ++i) {
-          const code = str.charCodeAt(i);
-          if (code === 92/* '\\' */) {
-            if (escaping) {
-              valueStart = i;
-              escaping = false;
-            } else {
-              value += str.slice(valueStart, i);
-              escaping = true;
-            }
-            continue;
-          }
-          if (code === 34/* '"' */) {
-            if (escaping) {
-              valueStart = i;
-              escaping = false;
-              continue;
-            }
-            value += str.slice(valueStart, i);
-            break;
-          }
-          if (escaping) {
-            valueStart = i - 1;
-            escaping = false;
-          }
-          // Invalid unescaped quoted character (malformed)
-          if (QDTEXT[code] !== 1)
-            return;
-        }
-
-        // No end quote (malformed)
-        if (i === str.length)
-          return;
-
-        ++i; // Skip over double quote
-      } else {
-        valueStart = i;
-        // Parse unquoted value
-        for (; i < str.length; ++i) {
-          const code = str.charCodeAt(i);
-          if (TOKEN[code] !== 1) {
-            // No value (malformed)
-            if (i === valueStart)
-              return;
-            break;
-          }
-        }
-        value = str.slice(valueStart, i);
-      }
-
-      value = defDecoder(value, 2);
-      if (value === undefined)
-        return;
-    }
-
-    name = name.toLowerCase();
-    if (params[name] === undefined)
-      params[name] = value;
-  }
-
-  return params;
-}
-
-function getDecoder(charset) {
-  let lc;
-  while (true) {
-    switch (charset) {
-      case 'utf-8':
-      case 'utf8':
-        return decoders.utf8;
-      case 'latin1':
-      case 'ascii': // TODO: Make these a separate, strict decoder?
-      case 'us-ascii':
-      case 'iso-8859-1':
-      case 'iso8859-1':
-      case 'iso88591':
-      case 'iso_8859-1':
-      case 'windows-1252':
-      case 'iso_8859-1:1987':
-      case 'cp1252':
-      case 'x-cp1252':
-        return decoders.latin1;
-      case 'utf16le':
-      case 'utf-16le':
-      case 'ucs2':
-      case 'ucs-2':
-        return decoders.utf16le;
-      case 'base64':
-        return decoders.base64;
-      default:
-        if (lc === undefined) {
-          lc = true;
-          charset = charset.toLowerCase();
-          continue;
-        }
-        return decoders.other.bind(charset);
-    }
-  }
-}
-
-const decoders = {
-  utf8: (data, hint) => {
-    if (data.length === 0)
-      return '';
-    if (typeof data === 'string') {
-      // If `data` never had any percent-encoded bytes or never had any that
-      // were outside of the ASCII range, then we can safely just return the
-      // input since UTF-8 is ASCII compatible
-      if (hint < 2)
-        return data;
-
-      data = Buffer.from(data, 'latin1');
-    }
-    return data.utf8Slice(0, data.length);
-  },
-
-  latin1: (data, hint) => {
-    if (data.length === 0)
-      return '';
-    if (typeof data === 'string')
-      return data;
-    return data.latin1Slice(0, data.length);
-  },
-
-  utf16le: (data, hint) => {
-    if (data.length === 0)
-      return '';
-    if (typeof data === 'string')
-      data = Buffer.from(data, 'latin1');
-    return data.ucs2Slice(0, data.length);
-  },
-
-  base64: (data, hint) => {
-    if (data.length === 0)
-      return '';
-    if (typeof data === 'string')
-      data = Buffer.from(data, 'latin1');
-    return data.base64Slice(0, data.length);
-  },
-
-  other: (data, hint) => {
-    if (data.length === 0)
-      return '';
-    if (typeof data === 'string')
-      data = Buffer.from(data, 'latin1');
-    try {
-      const decoder = new TextDecoder(this);
-      return decoder.decode(data);
-    } catch {}
-  },
+  if (obj.valueOf)
+    return obj.valueOf();
 };
 
-function convertToUTF8(data, charset, hint) {
-  const decode = getDecoder(charset);
-  if (decode)
-    return decode(data, hint);
-}
+/*!
+ * ignore
+ */
 
-function basename(path) {
-  if (typeof path !== 'string')
-    return '';
-  for (let i = path.length - 1; i >= 0; --i) {
-    switch (path.charCodeAt(i)) {
-      case 0x2F: // '/'
-      case 0x5C: // '\'
-        path = path.slice(i + 1);
-        return (path === '..' || path === '.' ? '' : path);
+exports.cloneObject = function cloneObject(obj, options) {
+  const minimize = options && options.minimize,
+      ret = {},
+      keys = Object.keys(obj),
+      len = keys.length;
+  let hasKeys = false,
+      val,
+      k = '',
+      i = 0;
+
+  for (i = 0; i < len; ++i) {
+    k = keys[i];
+    // Not technically prototype pollution because this wouldn't merge properties
+    // onto `Object.prototype`, but avoid properties like __proto__ as a precaution.
+    if (specialProperties.indexOf(k) !== -1) {
+      continue;
+    }
+
+    val = clone(obj[k], options);
+
+    if (!minimize || ('undefined' !== typeof val)) {
+      hasKeys || (hasKeys = true);
+      ret[k] = val;
     }
   }
-  return (path === '..' || path === '.' ? '' : path);
+
+  return minimize
+    ? hasKeys && ret
+    : ret;
+};
+
+exports.cloneArray = function cloneArray(arr, options) {
+  const ret = [],
+      l = arr.length;
+  let i = 0;
+  for (; i < l; i++)
+    ret.push(clone(arr[i], options));
+  return ret;
+};
+
+/**
+ * Merges `from` into `to` without overwriting existing properties.
+ *
+ * @param {Object} to
+ * @param {Object} from
+ * @api private
+ */
+
+exports.merge = function merge(to, from) {
+  const keys = Object.keys(from);
+
+  for (const key of keys) {
+    if (specialProperties.indexOf(key) !== -1) {
+      continue;
+    }
+    if ('undefined' === typeof to[key]) {
+      to[key] = from[key];
+    } else {
+      if (exports.isObject(from[key])) {
+        merge(to[key], from[key]);
+      } else {
+        to[key] = from[key];
+      }
+    }
+  }
+};
+
+/**
+ * Same as merge but clones the assigned values.
+ *
+ * @param {Object} to
+ * @param {Object} from
+ * @api private
+ */
+
+exports.mergeClone = function mergeClone(to, from) {
+  const keys = Object.keys(from);
+
+  for (const key of keys) {
+    if (specialProperties.indexOf(key) !== -1) {
+      continue;
+    }
+    if ('undefined' === typeof to[key]) {
+      to[key] = clone(from[key]);
+    } else {
+      if (exports.isObject(from[key])) {
+        mergeClone(to[key], from[key]);
+      } else {
+        to[key] = clone(from[key]);
+      }
+    }
+  }
+};
+
+/**
+ * Read pref helper (mongo 2.2 drivers support this)
+ *
+ * Allows using aliases instead of full preference names:
+ *
+ *     p   primary
+ *     pp  primaryPreferred
+ *     s   secondary
+ *     sp  secondaryPreferred
+ *     n   nearest
+ *
+ * @param {String} pref
+ */
+
+exports.readPref = function readPref(pref) {
+  switch (pref) {
+    case 'p':
+      pref = 'primary';
+      break;
+    case 'pp':
+      pref = 'primaryPreferred';
+      break;
+    case 's':
+      pref = 'secondary';
+      break;
+    case 'sp':
+      pref = 'secondaryPreferred';
+      break;
+    case 'n':
+      pref = 'nearest';
+      break;
+  }
+
+  return pref;
+};
+
+
+/**
+ * Read Concern helper (mongo 3.2 drivers support this)
+ *
+ * Allows using string to specify read concern level:
+ *
+ *     local          3.2+
+ *     available      3.6+
+ *     majority       3.2+
+ *     linearizable   3.4+
+ *     snapshot       4.0+
+ *
+ * @param {String|Object} concern
+ */
+
+exports.readConcern = function readConcern(concern) {
+  if ('string' === typeof concern) {
+    switch (concern) {
+      case 'l':
+        concern = 'local';
+        break;
+      case 'a':
+        concern = 'available';
+        break;
+      case 'm':
+        concern = 'majority';
+        break;
+      case 'lz':
+        concern = 'linearizable';
+        break;
+      case 's':
+        concern = 'snapshot';
+        break;
+    }
+    concern = { level: concern };
+  }
+  return concern;
+};
+
+/**
+ * Object.prototype.toString.call helper
+ */
+
+const _toString = Object.prototype.toString;
+exports.toString = function(arg) {
+  return _toString.call(arg);
+};
+
+/**
+ * Determines if `arg` is an object.
+ *
+ * @param {Object|Array|String|Function|RegExp|any} arg
+ * @return {Boolean}
+ */
+
+const isObject = exports.isObject = function(arg) {
+  return '[object Object]' == exports.toString(arg);
+};
+
+/**
+ * Object.keys helper
+ */
+
+exports.keys = Object.keys;
+
+/**
+ * Basic Object.create polyfill.
+ * Only one argument is supported.
+ *
+ * Based on https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Object/create
+ */
+
+exports.create = 'function' == typeof Object.create
+  ? Object.create
+  : create;
+
+function create(proto) {
+  if (arguments.length > 1) {
+    throw new Error('Adding properties is not supported');
+  }
+
+  function F() { }
+  F.prototype = proto;
+  return new F;
 }
 
-const TOKEN = [
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
-  0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
+/**
+ * inheritance
+ */
 
-const QDTEXT = [
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-];
+exports.inherits = function(ctor, superCtor) {
+  ctor.prototype = exports.create(superCtor.prototype);
+  ctor.prototype.constructor = ctor;
+};
 
-const CHARSET = [
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
-  0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
+/**
+ * Check if this object is an arguments object
+ *
+ * @param {Any} v
+ * @return {Boolean}
+ */
 
-const EXTENDED_VALUE = [
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
-  0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
-
-/* eslint-disable no-multi-spaces */
-const HEX_VALUES = [
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-   0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
-  -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-];
-/* eslint-enable no-multi-spaces */
-
-module.exports = {
-  basename,
-  convertToUTF8,
-  getDecoder,
-  parseContentType,
-  parseDisposition,
+exports.isArgumentsObject = function(v) {
+  return Object.prototype.toString.call(v) === '[object Arguments]';
 };
