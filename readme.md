@@ -1,59 +1,102 @@
-# ms
+# concat-stream
 
-![CI](https://github.com/vercel/ms/workflows/CI/badge.svg)
+Writable stream that concatenates all the data from a stream and calls a callback with the result. Use this when you want to collect all the data from a stream into a single buffer.
 
-Use this package to easily convert various time formats to milliseconds.
+[![Build Status](https://travis-ci.org/maxogden/concat-stream.svg?branch=master)](https://travis-ci.org/maxogden/concat-stream)
 
-## Examples
+[![NPM](https://nodei.co/npm/concat-stream.png)](https://nodei.co/npm/concat-stream/)
 
-```js
-ms('2 days')  // 172800000
-ms('1d')      // 86400000
-ms('10h')     // 36000000
-ms('2.5 hrs') // 9000000
-ms('2h')      // 7200000
-ms('1m')      // 60000
-ms('5s')      // 5000
-ms('1y')      // 31557600000
-ms('100')     // 100
-ms('-3 days') // -259200000
-ms('-1h')     // -3600000
-ms('-200')    // -200
-```
+### description
 
-### Convert from Milliseconds
+Streams emit many buffers. If you want to collect all of the buffers, and when the stream ends concatenate all of the buffers together and receive a single buffer then this is the module for you.
 
-```js
-ms(60000)             // "1m"
-ms(2 * 60000)         // "2m"
-ms(-3 * 60000)        // "-3m"
-ms(ms('10 hours'))    // "10h"
-```
+Only use this if you know you can fit all of the output of your stream into a single Buffer (e.g. in RAM).
 
-### Time Format Written-Out
+There are also `objectMode` streams that emit things other than Buffers, and you can concatenate these too. See below for details.
+
+## Related
+
+`concat-stream` is part of the [mississippi stream utility collection](https://github.com/maxogden/mississippi) which includes more useful stream modules similar to this one.
+
+### examples
+
+#### Buffers
 
 ```js
-ms(60000, { long: true })             // "1 minute"
-ms(2 * 60000, { long: true })         // "2 minutes"
-ms(-3 * 60000, { long: true })        // "-3 minutes"
-ms(ms('10 hours'), { long: true })    // "10 hours"
+var fs = require('fs')
+var concat = require('concat-stream')
+
+var readStream = fs.createReadStream('cat.png')
+var concatStream = concat(gotPicture)
+
+readStream.on('error', handleError)
+readStream.pipe(concatStream)
+
+function gotPicture(imageBuffer) {
+  // imageBuffer is all of `cat.png` as a node.js Buffer
+}
+
+function handleError(err) {
+  // handle your error appropriately here, e.g.:
+  console.error(err) // print the error to STDERR
+  process.exit(1) // exit program with non-zero exit code
+}
+
 ```
 
-## Features
+#### Arrays
 
-- Works both in [Node.js](https://nodejs.org) and in the browser
-- If a number is supplied to `ms`, a string with a unit is returned
-- If a string that contains the number is supplied, it returns it as a number (e.g.: it returns `100` for `'100'`)
-- If you pass a string with a number and a valid unit, the number of equivalent milliseconds is returned
+```js
+var write = concat(function(data) {})
+write.write([1,2,3])
+write.write([4,5,6])
+write.end()
+// data will be [1,2,3,4,5,6] in the above callback
+```
 
-## Related Packages
+#### Uint8Arrays
 
-- [ms.macro](https://github.com/knpwrs/ms.macro) - Run `ms` as a macro at build-time.
+```js
+var write = concat(function(data) {})
+var a = new Uint8Array(3)
+a[0] = 97; a[1] = 98; a[2] = 99
+write.write(a)
+write.write('!')
+write.end(Buffer.from('!!1'))
+```
 
-## Caught a Bug?
+See `test/` for more examples
 
-1. [Fork](https://help.github.com/articles/fork-a-repo/) this repository to your own GitHub account and then [clone](https://help.github.com/articles/cloning-a-repository/) it to your local device
-2. Link the package to the global module directory: `npm link`
-3. Within the module you want to test your local development instance of ms, just link it to the dependencies: `npm link ms`. Instead of the default one from npm, Node.js will now use your clone of ms!
+# methods
 
-As always, you can run the tests using: `npm test`
+```js
+var concat = require('concat-stream')
+```
+
+## var writable = concat(opts={}, cb)
+
+Return a `writable` stream that will fire `cb(data)` with all of the data that
+was written to the stream. Data can be written to `writable` as strings,
+Buffers, arrays of byte integers, and Uint8Arrays. 
+
+By default `concat-stream` will give you back the same data type as the type of the first buffer written to the stream. Use `opts.encoding` to set what format `data` should be returned as, e.g. if you if you don't want to rely on the built-in type checking or for some other reason.
+
+* `string` - get a string
+* `buffer` - get back a Buffer
+* `array` - get an array of byte integers
+* `uint8array`, `u8`, `uint8` - get back a Uint8Array
+* `object`, get back an array of Objects
+
+If you don't specify an encoding, and the types can't be inferred (e.g. you write things that aren't in the list above), it will try to convert concat them into a `Buffer`.
+
+If nothing is written to `writable` then `data` will be an empty array `[]`.
+
+# error handling
+
+`concat-stream` does not handle errors for you, so you must handle errors on whatever streams you pipe into `concat-stream`. This is a general rule when programming with node.js streams: always handle errors on each and every stream. Since `concat-stream` is not itself a stream it does not emit errors.
+
+We recommend using [`end-of-stream`](https://npmjs.org/end-of-stream) or [`pump`](https://npmjs.org/pump) for writing error tolerant stream code.
+
+# license
+
+MIT LICENSE
